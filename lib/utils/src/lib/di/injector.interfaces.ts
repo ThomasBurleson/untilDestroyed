@@ -1,12 +1,14 @@
 import { Type } from './type';
-import { DependencyInjector } from './injector.interfaces';
+import { InjectionToken } from './injection-token';
+
+export type Token = String | InjectionToken<string> | (new (...args: any[]) => any);
 
 export interface TypeProvider extends Type<any> {
   deps?: any[];
 }
 
 export interface Provider {
-  provide: any;
+  provide: Token;
   useClass?: any;
   useValue?: any;
   useFactory?: () => any;
@@ -16,15 +18,10 @@ export interface Provider {
 export type UndoChanges = () => void;
 
 export interface DependencyInjector {
-  get: (token: any) => any;
-  instanceOf: (token: any) => any;
+  get: (token: Token) => any;
+  reset: () => void;
+  instanceOf: (token: Token) => any;
   addProviders: (registry: Provider[]) => UndoChanges;
+  getFlatProviderTree: () => Provider[];
 }
 
-export function makeClassProvider(token:any): Provider {
-  return {
-    provide: token,
-    useClass: token,
-    deps: [...token['deps']],
-  };
-}

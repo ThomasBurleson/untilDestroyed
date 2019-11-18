@@ -1,7 +1,6 @@
-import { DependencyInjector, InjectionToken } from '../di';
+import { DependencyInjector, Token } from '../di';
 
 export type HookTuple<V, I extends DependencyInjector> = [V, I]; // Array of value + injector
-export type Token<T> = string | InjectionToken<string> | (new (...args: any[]) => T);
 
 /**
  * `useInjectorHook()` allows applications to build custom hooks that internally use
@@ -24,11 +23,11 @@ export type Token<T> = string | InjectionToken<string> | (new (...args: any[]) =
  * @param injector Custom DependencyInjector
  * @param token Token type of string, Class, or InjectionToken
  */
-export function useInjectorHook<T extends Token<T>>(
+export function useInjectorHook<T extends Token>(
   token: T,
   injector: DependencyInjector
 ): HookTuple<any, DependencyInjector>;
-export function useInjectorHook<T extends Token<T>, V>(
+export function useInjectorHook<T extends Token, V>(
   token: T,
   injector: DependencyInjector
 ): HookTuple<V, DependencyInjector> {

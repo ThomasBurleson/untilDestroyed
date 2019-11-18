@@ -31,11 +31,6 @@ import { Type } from './type';
  * @publicApi
  */
 export class InjectionToken<T> {
-  /** @internal */
-  readonly ngMetadataName = 'InjectionToken';
-
-  readonly ngInjectableDef: never | undefined;
-
   constructor(protected _desc: string) {}
 
   toString(): string {
@@ -43,6 +38,3 @@ export class InjectionToken<T> {
   }
 }
 
-export interface InjectableDefToken<T> extends InjectionToken<T> {
-  ngInjectableDef: never;
-}
