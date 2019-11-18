@@ -12,6 +12,7 @@
     "build": "yarn build:lib && yarn copy",
     "build:lib": "ng-packagr -p lib/utils/ng-package.json -c lib/utils/tsconfig.lib.json",
     "copy": "cp README.md dist/lib/utils",
+    "test": "jest -c ./jest.config.js",
     "publish": "npm publish ./dist/lib/utils"
   },
   "dependencies": {
