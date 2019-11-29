@@ -107,7 +107,7 @@ Here is the typical implementation [using `ngOnDestroy()` + `takeUntil()`] to ma
 
 ```ts
 @Component({...})
-export class DocumentViewerComponent implements OnInit {  
+export class DocumentViewerComponent implements OnInit, OnDestroy {  
   @Input() fullName: string;
   documents: Documents[];
 
@@ -135,7 +135,7 @@ export class DocumentViewerComponent implements OnInit {
  
 ```ts
 @Component({...})
-export class DocumentViewerComponent implements OnInit {  
+export class DocumentViewerComponent implements OnInit, OnDestroy {  
   @Input() fullName: string;
   documents: Documents[];
 
