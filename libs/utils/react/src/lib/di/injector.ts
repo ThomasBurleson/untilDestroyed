@@ -18,7 +18,7 @@ export function makeInjector(registry: (Provider | TypeProvider)[], parent?: Dep
 
   // Always use the Provider long-form to register, e.g
   // { provide: MyClazz, useClass: MyClazz } instead of MyClazz
-  const normalized = registry.map(it => {
+  const normalized = registry.map((it) => {
     const isProvider = !!(it as Provider).provide;
     return isProvider ? it : makeClassProvider(it);
   }) as Provider[];
@@ -86,7 +86,7 @@ class Injector implements DependencyInjector {
   addProviders(registry: Provider[]): UndoChanges {
     const origProviders = [...this.providers];
     this.providers = mergeProviders(this.providers, registry);
-    registry.map(it => this.singletons.delete(it.provide));
+    registry.map((it) => this.singletons.delete(it.provide));
 
     return () => this.addProviders(origProviders);
   }
@@ -125,7 +125,7 @@ class Injector implements DependencyInjector {
    * Find last Provider registration (last one wins)
    */
   private findLastRegistration(token: Token, list: Provider[]) {
-    const registry = this.providers.filter(it => it.provide === token);
+    const registry = this.providers.filter((it) => it.provide === token);
     return registry.length ? registry[registry.length - 1] : null;
   }
 
@@ -147,7 +147,9 @@ class Injector implements DependencyInjector {
     const makeAndCache = this.findAndMakeInstance.bind(this);
     const provider = this.findLastRegistration(token, this.providers);
     const deps = provider && provider.deps ? provider.deps.map(makeAndCache) : [];
-    const makeWithClazz = (clazz: any) => (clazz ? new clazz(...deps) : null);
+
+    const makeWithClazz = (clazz: any) =>
+      clazz ? new (clazz.bind.apply(clazz, __doSpread.call(null, [void 0], deps)))() : null;
     const makeWithFactory = (fn: () => any) => (fn ? fn.call(null, deps) : null);
 
     return (
@@ -170,7 +172,7 @@ function makeClassProvider(token: any): Provider {
   return {
     provide: token,
     useClass: token,
-    deps: [...(token['deps'] || [])]
+    deps: [...(token['deps'] || [])],
   };
 }
 
@@ -180,10 +182,21 @@ function makeClassProvider(token: any): Provider {
  */
 function mergeProviders(current: Provider[], updated: Provider[]): Provider[] {
   const extractToken = (it: Provider) => it.provide;
-  const findByToken = token => allEntries.find(it => it.provide === token);
+  const findByToken = (token) => allEntries.find((it) => it.provide === token);
   const allEntries = [...updated, ...current];
   const allTokens = new Set(allEntries.map(extractToken));
 
   // Reduce combined set to entries unique by Token, prioritize updated entries first.
   return Array.from(allTokens).map(findByToken);
+}
+
+// ***************************************************************************************************
+//  Due to issues with compiling ESM with `new clazz(...deps)`, we will use a special spread function
+// ***************************************************************************************************
+
+function __doSpread() {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+  for (var r = Array(s), k = 0, i = 0; i < il; i++)
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) r[k] = a[j];
+  return r;
 }

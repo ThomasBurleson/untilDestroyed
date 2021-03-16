@@ -7282,6 +7282,11 @@ immer@^8.0.1:
   resolved "https://registry.yarnpkg.com/immer/-/immer-8.0.1.tgz#9c73db683e2b3975c424fb0572af5889877ae656"
   integrity sha512-aqXhGP7//Gui2+UrEtvxZxSquQVXTpZ7KDxfCcKAF3Vysvw0CViVaW9RZ1j1xlIYqaaaipBoqdqeibkc18PNvA==
 
+immutable@^4.0.0-rc.12:
+  version "4.0.0-rc.12"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.0.0-rc.12.tgz#ca59a7e4c19ae8d9bf74a97bdf0f6e2f2a5d0217"
+  integrity sha512-0M2XxkZLx/mi3t8NVwIm1g8nHoEmM9p9UBl/G9k4+hm0kBgOVdMV/B3CY5dQ8qG8qc80NN4gDV4HQv6FTJ5q7A==
+
 import-cwd@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/import-cwd/-/import-cwd-3.0.0.tgz#20845547718015126ea9b3676b7592fb8bd4cf92"
@@ -8082,6 +8087,11 @@ jest-haste-map@^26.6.2:
     walker "^1.0.7"
   optionalDependencies:
     fsevents "^2.1.2"
+
+jest-immutable-matchers@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/jest-immutable-matchers/-/jest-immutable-matchers-2.0.1.tgz#7c86ce0a0d50435eb87d72114f5b162fb7d2ce7e"
+  integrity sha512-1FDIs3NnUzPIz6TVH9U+T5/GRUn92x9guW9PEo8xnoWN8oh8C/uYgVC2AcGD5r3Ss1EIdIOuiq78dDyQfbRNAg==
 
 jest-jasmine2@^26.6.3:
   version "26.6.3"

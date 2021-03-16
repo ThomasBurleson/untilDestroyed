@@ -1,0 +1,30 @@
+{
+  "name": "@mindspace-io/react-akita",
+  "version": "1.1.8",
+  "author": {
+    "name": "Thomas Burleson, Mindspace",
+    "email": "ThomasBurleson@Gmail.com"
+  },
+  "description": "React hooks + utilities for Akita State Management",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ThomasBurleson/mindspace-utils.git",
+    "directory": "libs/utils/react-akita"
+  },
+  "homepage": "https://github.com/ThomasBurleson/mindspace-utils",
+  "bugs": {
+    "url": "https://github.com/ThomasBurleson/mindspace-utils/issues"
+  },
+  "dependencies": {
+    "@mindspace-io/react": ">1.1.6",
+    "@datorama/akita": ">6.1.2",
+    "immer": ">8.0.0",
+    "rxjs": ">6.5.0"
+  },
+  "peerDependencies": {
+    "react": ">16.12.0",
+    "react-dom": ">16.12.0"
+  }
+}
