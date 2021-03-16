@@ -1,18 +1,21 @@
 {
-  "extends": "../../../tsconfig.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react",
     "allowJs": true,
+    "target":"es6",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "types": ["node", "jest"]
   },
-  "angularCompilerOptions": {
-    "enableIvy": true
-  },
-  "files": [
-    "../../../node_modules/@nrwl/react/typings/cssmodule.d.ts",
-    "../../../node_modules/@nrwl/react/typings/image.d.ts"
-  ],
-  "include": ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"]
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
 }

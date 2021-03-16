@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "projects": {
     "lab": {
       "root": "apps/lab",
@@ -43,7 +43,8 @@
                 }
               ]
             }
-          }
+          },
+          "outputs": ["{options.outputPath}"]
         },
         "serve": {
           "builder": "@nrwl/web:dev-server",
@@ -60,18 +61,17 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "config": "apps/lab/.eslintrc",
             "tsConfig": ["apps/lab/tsconfig.app.json", "apps/lab/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/lab/**"]
+            "exclude": ["**/node_modules/**", "!apps/lab/**/*"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/lab/jest.config.js",
-            "tsConfig": "apps/lab/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": ["coverage/apps/lab"]
         }
       }
     },
@@ -97,9 +97,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "config": "apps/lab-e2e/.eslintrc",
             "tsConfig": ["apps/lab-e2e/tsconfig.e2e.json"],
-            "exclude": ["**/node_modules/**", "!apps/lab-e2e/**"]
+            "exclude": ["**/node_modules/**", "!apps/lab-e2e/**/*"]
           }
         }
       }
@@ -108,19 +107,10 @@
       "root": "libs/utils/react",
       "sourceRoot": "libs/utils/react/src",
       "projectType": "library",
-      "schematics": {},
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:lint",
-          "options": {
-            "linter": "eslint",
-            "config": "libs/utils/react/.eslintrc",
-            "tsConfig": ["libs/utils/react/tsconfig.lib.json", "libs/utils/react/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/utils/react/**"]
-          }
-        },
+      "targets": {
         "build": {
-          "builder": "@nrwl/web:package",
+          "executor": "@nrwl/web:package",
+          "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/libs/utils/react",
             "tsConfig": "libs/utils/react/tsconfig.lib.json",
@@ -128,14 +118,56 @@
             "entryFile": "libs/utils/react/src/index.ts",
             "external": ["react", "react-dom"],
             "babelConfig": "@nrwl/react/plugins/bundle-babel",
-            "rollupConfig": "@nrwl/react/plugins/bundle-rollup"
+            "rollupConfig": "@nrwl/react/plugins/bundle-rollup",
+            "assets": [{ "glob": "README.md", "input": ".", "output": "." }]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/utils/react/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
-          "builder": "@nrwl/jest:jest",
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/utils/react"],
           "options": {
             "jestConfig": "libs/utils/react/jest.config.js",
-            "tsConfig": "libs/utils/react/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "utils-react-akita": {
+      "root": "libs/utils/react-akita",
+      "sourceRoot": "libs/utils/react-akita/src",
+      "projectType": "library",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/web:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/utils/react-akita",
+            "tsConfig": "libs/utils/react-akita/tsconfig.lib.json",
+            "project": "libs/utils/react-akita/package.json",
+            "entryFile": "libs/utils/react-akita/src/index.ts",
+            "external": ["react", "react-dom"],
+            "babelConfig": "@nrwl/react/plugins/bundle-babel",
+            "rollupConfig": "@nrwl/react/plugins/bundle-rollup",
+            "assets": [{ "glob": "README.md", "input": ".", "output": "." }]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/utils/react-akita/**/*.{ts,tsx,js,jsx}"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/utils/react-akita"],
+          "options": {
+            "jestConfig": "libs/utils/react-akita/jest.config.js",
             "passWithNoTests": true
           }
         }
@@ -151,7 +183,8 @@
           "builder": "@nrwl/angular:package",
           "options": {
             "tsConfig": "libs/utils/angular/tsconfig.lib.json",
-            "project": "libs/utils/angular/ng-package.json"
+            "project": "libs/utils/angular/ng-package.json",
+            "buildableProjectDepsInPackageJsonType": "dependencies"
           },
           "configurations": {
             "production": {
@@ -163,17 +196,17 @@
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
             "tsConfig": ["libs/utils/angular/tsconfig.lib.json", "libs/utils/angular/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/utils/angular/**"]
+            "exclude": ["**/node_modules/**", "!libs/utils/angular/**/*"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "libs/utils/angular/jest.config.js",
-            "tsConfig": "libs/utils/angular/tsconfig.spec.json",
             "passWithNoTests": true,
             "setupFile": "libs/utils/angular/src/test-setup.ts"
-          }
+          },
+          "outputs": ["coverage/libs/utils/angular"]
         }
       },
       "schematics": {
@@ -186,66 +219,15 @@
   "cli": {
     "defaultCollection": "@nrwl/react"
   },
-  "schematics": {
-    "@nrwl/workspace": {
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/cypress": {
-      "cypress-project": {
-        "linter": "eslint"
-      }
-    },
+  "generators": {
     "@nrwl/react": {
       "application": {
-        "style": "scss",
+        "style": "styled-jsx",
         "linter": "eslint",
         "babel": true
       },
-      "component": {
-        "style": "scss"
-      },
-      "library": {
-        "style": "scss",
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/next": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/web": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/node": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/nx-plugin": {
-      "plugin": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/nest": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/express": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      }
+      "component": { "style": "styled-jsx" },
+      "library": { "style": "styled-jsx", "linter": "eslint" }
     }
   },
   "defaultProject": "lab"

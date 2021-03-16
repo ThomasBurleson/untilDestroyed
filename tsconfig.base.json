@@ -8,7 +8,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "es2015",
+    "target": "ES2016",
     "module": "esnext",
     "typeRoots": ["node_modules/@types"],
     "lib": ["es2017", "dom"],
@@ -16,6 +16,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@mindspace-io/react": ["libs/utils/react/src/index.ts"],
       "@mindspace-io/utils/react": ["libs/utils/react/src/index.ts"],
       "@mindspace-io/utils/angular": ["libs/utils/angular/src/index.ts"]
     }

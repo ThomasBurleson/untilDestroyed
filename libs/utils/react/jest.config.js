@@ -1,12 +1,15 @@
 module.exports = {
-  name: 'utils-react',
-  preset: '../../../jest.config.js',
-  transform: {
-    '^.+\\.[tj]sx?$': [
-      'babel-jest',
-      { cwd: __dirname, configFile: './babel-jest.config.json' }
-    ]
+  displayName: 'utils-react',
+  preset: '../../../jest.preset.js',
+  globals: {
+    'ts-jest': {
+      tsConfig: '<rootDir>/tsconfig.spec.json',
+    },
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'html'],
-  coverageDirectory: '../../../coverage/libs/utils/react'
+  testEnvironment: 'jsdom',
+  transform: {
+    '^.+\\.[tj]sx?$': 'ts-jest',
+  },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  coverageDirectory: '../../../coverage/libs/utils/react',
 };

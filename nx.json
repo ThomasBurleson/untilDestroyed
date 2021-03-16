@@ -6,9 +6,10 @@
       "dependencies": "*",
       "devDependencies": "*"
     },
-    "tsconfig.json": "*",
+    ".eslintrc.json": "*",
     "tslint.json": "*",
-    "nx.json": "*"
+    "nx.json": "*",
+    "tsconfig.base.json": "*"
   },
   "tasksRunnerOptions": {
     "default": {
@@ -27,10 +28,16 @@
       "implicitDependencies": ["lab"]
     },
     "utils-react": {
-      "tags": ["type:utils", "type:react"]
+      "tags": ["type:utils", "scope:react"]
+    },
+    "utils-react-akita": {
+      "tags": ["type:utils", "scope:akita"]
     },
     "utils-angular": {
-      "tags": ["type:util", "type:react"]
+      "tags": ["type:util", "scope:angular"]
     }
+  },
+  "affected": {
+    "defaultBase": "master"
   }
 }
