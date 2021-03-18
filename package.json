@@ -80,6 +80,7 @@
     "immutable": "^4.0.0-rc.12",
     "jest": "26.2.2",
     "jest-immutable-matchers": "^2.0.1",
+    "jest-preset-angular": "^8.4.0",
     "ng-packagr": "11.2.4",
     "prettier": "2.2.1",
     "rollup": "^2.3.2",

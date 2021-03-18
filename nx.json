@@ -20,13 +20,6 @@
     }
   },
   "projects": {
-    "lab": {
-      "tags": []
-    },
-    "lab-e2e": {
-      "tags": [],
-      "implicitDependencies": ["lab"]
-    },
     "utils-react": {
       "tags": ["type:utils", "scope:react"]
     },
