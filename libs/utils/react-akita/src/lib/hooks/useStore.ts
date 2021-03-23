@@ -11,9 +11,10 @@ import {
   Destroy,
   GetState,
   SetState,
-  CustomValue,
+  StoreAPI,
   ComputedProperty,
   AddComputedProperty,
+  WatchProperty,
   State,
   StateCreator,
   StateCreatorOptions,
@@ -22,7 +23,8 @@ import {
   StateSliceListener,
   Unsubscribe,
   Subscribe,
-  StoreApi,
+  SetError,
+  SetLoading,
   UseStore,
   StateSelectorList,
 } from './store.interfaces';
@@ -30,7 +32,7 @@ import {
 /**
  * Akita expects a store decorator to be used to assign a name. If a name is not available,
  * a `console.error()` is thrown and inter-store messaging is not setup properly.
- * @see upliftStore() for the 'hack' fix
+ * @see reinitStore() for the 'hack' fix
  */
 @StoreConfig({ name: 'mindspace-io' })
 class StoreWithConfig<T> extends Store<T> {}
@@ -59,13 +61,16 @@ export function createStore<TState extends State>(
   const name = options.storeName || `ReactAkitStore${Math.random()}`;
   const store = new StoreWithConfig<TState>({}, { producerFn: produce, name });
   const query = new Query<TState>(store);
+  const computed: Record<string, () => void> = {};
 
   /**
    * setIsLoading() + setError()
    * Status API methods available on 'api'
    */
-  const setIsLoading = (isLoading = true) => store.update((s) => ({ ...s, isLoading }));
-  const setError = (error: Error | unknown) => store.update((s) => ({ ...s, error }));
+  const setIsLoading: SetLoading = (isLoading = true) => store.update((s) => ({ ...s, isLoading }));
+  const setError: SetError = (error: Error | unknown) => {
+    store.update((s) => ({ ...s, error }));
+  };
 
   /**
    * setState() + getState()
@@ -84,29 +89,76 @@ export function createStore<TState extends State>(
    */
   const subscribe: Subscribe<TState> = <StateSlice>(
     listener: StateListener<TState> | StateSliceListener<StateSlice>,
-    selector: StateSelector<TState, StateSlice> = identity
+    selector?: StateSelector<TState, StateSlice>
   ): Unsubscribe => {
     const onNext = (s: TState & StateSlice) => listener(s);
-    const watcher = query.select(selector).subscribe(onNext);
+    const watcher = query.select(selector || identity).subscribe(onNext);
     return () => watcher.unsubscribe();
   };
 
   /**
    * addComputedProperty()
+   *
+   * Inject the computed property into the target 'state':
+   *
+   * - Subscribe to state changes with the computed property selectors
+   * - Use the computed property predicate function to map to a 'value' response
+   * - update the targeted computed property with the 'value' response
+   *
+   * This method is used inside createStore() to configure watches during state
+   * initialization.
+   *
+   * NOTE: since the store/query are not yet ready, we 'queue' these requests
+   *       and later in `registerComputedProperties()` we finish the setup
+   *       for all computed properties
    */
   const addComputedProperty: AddComputedProperty<TState> = <K extends any, U>(
-    property: ComputedProperty<TState, K, U>
+    property: ComputedProperty<TState, K, U>,
+    target?: TState
   ) => {
-    const makeQuery = (predicate) => query.select(predicate);
-    const source$ = combineLatest(property.selectors.map(makeQuery)).pipe(map(property.predicate));
+    const deferredSetup = () => {
+      const makeQuery = (predicate) => query.select(predicate);
+      const source$ = combineLatest(property.selectors.map(makeQuery)).pipe(map(property.predicate));
 
-    source$.subscribe((computedValue: unknown) => {
-      // Update the state at the END of the microtask queue
-      Promise.resolve(computedValue).then(() => {
-        setState((s) => ({ ...s, ...{ [property.name]: computedValue } }));
+      source$.subscribe((computedValue: unknown) => {
+        callAsync((value) => {
+          setState((s) => ({ ...s, ...{ [property.name]: value } }));
+        }, computedValue);
       });
+    };
+
+    computed[property.name] = deferredSetup;
+    return target;
+  };
+
+  /**
+   * Watch for changes in a specific property and then notify 'listener'
+   * This method is used inside createStore() to configure watches during state
+   * initialization.
+   */
+  const watchProperty: WatchProperty<TState> = <StateSlice>(
+    property: string,
+    listener: StateSliceListener<StateSlice>
+  ) => {
+    const deferredSetup = () => {
+      const onNext = (s: TState & StateSlice) => callAsync(listener, s);
+      const selector = (s: TState) => s[property];
+      const watcher = query.select(selector).subscribe(onNext);
+      return () => watcher.unsubscribe();
+    };
+
+    computed[property] = deferredSetup;
+  };
+
+  const registerComputedProperties = () => {
+    Object.keys(computed).map((propertyName) => {
+      const registerNow = computed[propertyName];
+      delete computed[propertyName];
+
+      registerNow();
     });
   };
+
   const destroy: Destroy = () => store.destroy();
 
   /**
@@ -114,13 +166,23 @@ export function createStore<TState extends State>(
    * Create the immutable state using the 'createState()' callback factory
    * Add status state and fix Akita 'storename' bug.
    */
-  const api: StoreApi<TState> = { destroy, subscribe, getState, setState, addComputedProperty, setIsLoading, setError };
-  const state = produce({}, () => createState(setState, getState, api));
+  const storeAPI: StoreAPI<TState> = {
+    get: getState,
+    set: setState,
+    addComputedProperty: addComputedProperty,
+    watchProperty: watchProperty,
+    observe: subscribe,
+    destroy: destroy,
+    setIsLoading,
+    setError,
+  };
+  const state = produce({}, () => createState(storeAPI));
 
-  upliftStore(store, name, {
+  reinitStore(store, name, {
     ...state,
     ...{ error: null, isLoading: false },
   });
+  registerComputedProperties();
 
   /**
    * Internal utility methods for selectors
@@ -134,7 +196,7 @@ export function createStore<TState extends State>(
     const list = selector instanceof Array ? <StateSelectorList<TState, StateSlice>>selector : [selector];
     return list.length == 1 ? query.select(list[0]) : combineLatest(list.map((it) => query.select(it)));
   };
-  const toStateSlice = <StateSlice>(
+  const getSliceValueFor = <StateSlice>(
     selector: StateSelector<TState, StateSlice> | StateSelectorList<TState, StateSlice> = identity
   ): any | any[] => {
     const list = selector instanceof Array ? (selector as StateSelectorList<TState, StateSlice>) : null;
@@ -160,7 +222,7 @@ export function createStore<TState extends State>(
   const useStore: any = <StateSlice>(
     selector?: StateSelector<TState, StateSlice> | StateSelectorList<TState, StateSlice>
   ) => {
-    const [initial] = useState<StateSlice>(() => toStateSlice(selector));
+    const [initial] = useState<StateSlice>(() => getSliceValueFor(selector));
     const [slice, setSlice$] = useObservable<unknown>(null, initial);
 
     useIsoLayoutEffect(() => {
@@ -172,21 +234,7 @@ export function createStore<TState extends State>(
     return typeof slice == 'undefined' ? initial : slice;
   };
 
-  return Object.assign(useStore, api); // Decorate hook function with API methods, public custom hook/store
-}
-
-/**
- * Inject the computed property into the target 'state':
- *
- * - Subscribe to state changes with the computed property selectors
- * - Use the computed property predicate function to map to a 'value' response
- * - update the targeted computed property with the 'value' response
- */
-export function addComputedProperty<T extends State, SelectorTypes, PropType extends CustomValue = CustomValue>(
-  target: UseStore<T>,
-  property: ComputedProperty<T, SelectorTypes, PropType>
-): void {
-  target.addComputedProperty(property);
+  return Object.assign(useStore, storeAPI); // Decorate hook function with API methods, public custom hook/store
 }
 
 // *******************************************************
@@ -199,7 +247,7 @@ export function addComputedProperty<T extends State, SelectorTypes, PropType ext
  * @param store
  * @param name
  */
-function upliftStore(store: Store, name: string, state) {
+function reinitStore(store: Store, name: string, state) {
   if (!!name && store.storeName != name) {
     store.constructor['akitaConfig'].storeName = name;
     (store['options'] as StoreConfigOptions & {
@@ -208,4 +256,11 @@ function upliftStore(store: Store, name: string, state) {
   }
   // Reinitalize
   store['onInit'](state);
+}
+
+/**
+ * Invoke the callback at the end of the microTask
+ */
+function callAsync(callback: (value: any) => void, resolveWith: any) {
+  Promise.resolve(resolveWith).then(callback);
 }

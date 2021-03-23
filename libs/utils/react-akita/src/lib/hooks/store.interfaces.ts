@@ -30,7 +30,10 @@ export type StateSliceListener<T> = (slice: T, previousSlice?: T) => void;
 export type Unsubscribe = () => void;
 export interface Subscribe<T extends State> {
   (listener: StateListener<T>): Unsubscribe;
-  <StateSlice>(listener: StateSliceListener<StateSlice>, selector: StateSelector<T, StateSlice>): Unsubscribe;
+  <StateSlice>(listener: StateSliceListener<StateSlice>, selector?: StateSelector<T, StateSlice>): Unsubscribe;
+}
+export interface WatchProperty<T extends State> {
+  <StateSlice>(propertyName: string, listener: StateSliceListener<StateSlice>): void;
 }
 
 export interface ComputedProperty<T extends State, K, U> {
@@ -40,7 +43,7 @@ export interface ComputedProperty<T extends State, K, U> {
 }
 // Add computed property to the store
 export type AddComputedProperty<T extends State> = {
-  <K, U extends unknown>(property: ComputedProperty<T, K, U>): void;
+  <K, U extends unknown>(property: ComputedProperty<T, K, U>, target?: T): T;
 };
 
 export type SetState<T extends State> = {
@@ -48,32 +51,28 @@ export type SetState<T extends State> = {
 };
 export type GetState<T extends State> = () => T;
 export type Destroy = () => void;
-export interface StoreApi<T extends State> extends StatusAPI {
-  setState: SetState<T>;
-  getState: GetState<T>;
+
+export interface StoreAPI<T extends State> {
+  set: SetState<T>;
+  get: GetState<T>;
   addComputedProperty: AddComputedProperty<T>;
-  subscribe: Subscribe<T>;
+  watchProperty: WatchProperty<T>;
+  observe: Subscribe<T>;
   destroy: Destroy;
+  setIsLoading: SetLoading;
+  setError: SetError;
 }
-export type StateCreator<T extends State, CustomSetState = SetState<T>> = (
-  set: CustomSetState,
-  get: GetState<T>,
-  api: StoreApi<T>
-) => T;
 
 export type StateCreatorOptions = {
   storeName?: string; // Used by Akita to decorate the Store constructor
 };
 
+export type StateCreator<T extends State> = (store: StoreAPI<T>) => T;
+
 /**
  * Interface for the custom hook published from calls to `createStore()`
  */
-export interface UseStore<T extends State> extends StatusAPI {
+export interface UseStore<T extends State> extends StoreAPI<T> {
   (): T;
   <U>(selector?: StateSelector<T, U> | StateSelectorList<T, U>): U;
-  setState: SetState<T>;
-  getState: GetState<T>;
-  subscribe: Subscribe<T>;
-  addComputedProperty: AddComputedProperty<T>;
-  destroy: Destroy;
 }

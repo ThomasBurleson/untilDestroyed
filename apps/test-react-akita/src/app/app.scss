@@ -85,9 +85,10 @@
   column-gap: 10px;
   position: relative;
 }
-.content > div {
+.content > .tabItem {
   display: block;
   position: relative;
+  background-color: white;
   width: 500px;
   padding-top: 25px;
   margin: 6px;

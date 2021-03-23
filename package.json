@@ -1,6 +1,6 @@
 {
   "name": "mindspace-io",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "license": "MIT",
   "scripts": {
     "nx": "nx",
@@ -29,9 +29,11 @@
   "private": true,
   "dependencies": {
     "@datorama/akita": "^6.1.2",
+    "axios": "^0.21.1",
     "core-js": "^3.6.5",
     "document-register-element": "1.13.1",
     "immer": "^8.0.1",
+    "lodash": "^4.17.21",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "rxjs": "6.5.5",

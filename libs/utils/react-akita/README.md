@@ -31,7 +31,7 @@ interface StoreState {
   removeAllBears: () => void;
 }
 
-const onBuildState = (set, get, api) => {
+const onBuildState = ({ set, get }) => {
   return {
     // Properties
     bears: 0,
@@ -39,6 +39,9 @@ const onBuildState = (set, get, api) => {
     // Mutators
     increasePopulation: () => set((state) => ({ bears: state.bears + 1 })),
     removeAllBears: () => set({ bears: 0 }),
+
+    // Computed Properties (none here)
+    // Watch Properties (none here)
   };
 };
 
@@ -100,14 +103,24 @@ Whenever those values change, then the view will be re-rendered with the latest 
 
 ## Using the Store API
 
-When a store is created it has the following functional API:
+When a store is created, the variable reference also has the following functional API:
 
 ```ts
 export interface StoreApi<T extends State> extends StatusAPI {
-  setState: SetState<T>;
-  getState: GetState<T>;
-  subscribe: Subscribe<T>;
-  addComputed: AddComputed<T>;
+  set: SetState<T>;
+  get: GetState<T>;
+
+  // Used during store configuration
+  addComputedProperty: AddComputedProperty<T>;
+  watchProperty: WatchProperty<T>;
+
+  // notifications do NOT trigger UI re-renders
+  observe: Subscribe<T>;
+
+  // Used to announce status
+  setIsLoading: SetLoading;
+  setError: SetError;
+
   destroy: Destroy;
 }
 
@@ -163,4 +176,4 @@ Just install with:
 npm install @mindspace-io/react-akita
 ```
 
-Under the hood, this library uses `immer`, `@datorama/akita`, and `@mindspace-io/react`; these will be automatically installed along with `@mindspace-io/react-akita`.
+Under the hood, this library uses `immer`, `@datorama/akita`, and `rxjs`; these will be automatically installed along with `@mindspace-io/react-akita`.

@@ -33,7 +33,7 @@ export const selectViewModel: ViewModel = (s: CounterState) => {
  * Instantiate store with state
  *******************************************/
 
-export const useStore = createStore<CounterState>((set) => ({
+export const useStore = createStore<CounterState>(({set}) => ({
   visits: 0,
   messages: [],
   incrementCount() {  // uses reducer-like to create new state

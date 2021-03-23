@@ -35,7 +35,7 @@ type EmailAndSaveFn = [EmailList, SaveEmailsFn, boolean];
 describe('UseStore state management', () => {
   describe('create()', () => {
     it('should create a store', () => {
-      const useStore = createStore<EmailState>((set) => ({
+      const useStore = createStore<EmailState>(({ set }) => ({
         emails: [],
         saveEmails: (emails) => set({ emails }),
       }));
@@ -44,15 +44,15 @@ describe('UseStore state management', () => {
       // Check API
       expect(useStore.setIsLoading).toBeTruthy();
       expect(useStore.setError).toBeTruthy();
-      expect(useStore.getState).toBeTruthy();
-      expect(useStore.setState).toBeTruthy();
-      expect(useStore.subscribe).toBeTruthy();
+      expect(useStore.get).toBeTruthy();
+      expect(useStore.set).toBeTruthy();
+      expect(useStore.observe).toBeTruthy();
       expect(useStore.destroy).toBeTruthy();
     });
 
     it('should create a store and subscribe for entire state', () => {
       let state: EmailState = undefined;
-      const store = createStore<EmailState>((set) => ({
+      const store = createStore<EmailState>(({ set }) => ({
         emails: ['ThomasBurleson@gmail.com'],
         saveEmails: (emails) => set({ emails }),
       }));
@@ -60,7 +60,7 @@ describe('UseStore state management', () => {
       expect(store).toBeTruthy();
 
       // Subscribe to all state changes
-      const unsubscribe = store.subscribe((source) => {
+      const unsubscribe = store.observe((source) => {
         state = source;
       });
 
@@ -82,16 +82,16 @@ describe('UseStore state management', () => {
     });
 
     it('should create a store and subscribe for partial slice of state', () => {
-      const store = createStore<EmailState>((set) => ({
+      const store = createStore<EmailState>(({ set }) => ({
         emails: ['ThomasBurleson@gmail.com'],
         saveEmails: (emails) => set({ emails }),
       }));
-      const api: EmailState = store.getState();
+      const api: EmailState = store.get();
 
       let emails: string[] = undefined;
 
       // Subscribe to all state changes
-      const unsubscribe = store.subscribe<string[]>(
+      const unsubscribe = store.observe<string[]>(
         source => { emails = source }, // prettier-ignore
         (s) => s.emails
       );
@@ -114,7 +114,7 @@ describe('UseStore state management', () => {
     let useStore: UseStore<EmailState>;
 
     beforeEach(() => {
-      useStore = createStore((set) => ({
+      useStore = createStore(({ set }) => ({
         emails: ['ThomasBurleson@gmail.com'],
         saveEmails: (emails) => set({ emails }),
       }));
@@ -185,25 +185,25 @@ describe('UseStore state management', () => {
     });
 
     it('update state with partial selector; confirm with getState()', () => {
-      const useStore = createStore<MessageState>(set => ({  
+      const useStore = createStore<MessageState>(({set}) => ({  
         messages: [],         
         saveMessages: (v) => v ,
         numViews: 0,
         incrementCount: () => set((s: MessageState) => ({ numViews: s.numViews + 1 }))
       })); // prettier-ignore
-      const state = useStore.getState();
+      const state = useStore.get();
       expect(state.numViews).toBe(0);
 
       act(() => {
         state.incrementCount();
       });
 
-      const updated = useStore.getState();
+      const updated = useStore.get();
       expect(updated.numViews).toBe(1);
     });
 
     it('update state with partial selector that returns new state', () => {
-      const useStore = createStore<MessageState>((set) => ({
+      const useStore = createStore<MessageState>(({ set }) => ({
         numViews: 0,
         incrementCount: () => set((s: MessageState) => ({ numViews: s.numViews + 1 })),
       }));
@@ -218,7 +218,7 @@ describe('UseStore state management', () => {
     });
 
     it('update state with partial selector that modifies the draft', () => {
-      const useStore = createStore<MessageState>((set) => ({
+      const useStore = createStore<MessageState>(({ set }) => ({
         numViews: 0,
         incrementCount: () =>
           set((draft: MessageState) => {
@@ -242,8 +242,8 @@ describe('UseStore state management', () => {
     });
 
     it('should create immutable state', () => {
-      const useStore = createStore<MessageState>(set => ({ messages: [], saveMessages: (v) => v })); // prettier-ignore
-      const state = useStore.getState();
+      const useStore = createStore<MessageState>(({set}) => ({ messages: [], saveMessages: (v) => v })); // prettier-ignore
+      const state = useStore.get();
       const origSaveMessages = state.saveMessages;
       const origMessages = state.messages;
 
@@ -259,7 +259,7 @@ describe('UseStore state management', () => {
     });
 
     it('should emit immutable state from an "empty" hook ', () => {
-      const useStore = createStore<MessageState>(set => ({ messages: [], saveMessages: (v) => v })); // prettier-ignore
+      const useStore = createStore<MessageState>(({set}) => ({ messages: [], saveMessages: (v) => v })); // prettier-ignore
       const { result } = renderHook<UseStore<MessageState>, MessageState>(useStore);
       const origSaveMessages = result.current.saveMessages;
       const origMessages = result.current.messages;
@@ -276,7 +276,7 @@ describe('UseStore state management', () => {
     });
 
     it('should emit immutable state from an hook + selector ', () => {
-      const useStore = createStore<MessageState>(set => ({ messages: [], saveMessages: (v) => v })); // prettier-ignore
+      const useStore = createStore<MessageState>(({set}) => ({ messages: [], saveMessages: (v) => v })); // prettier-ignore
       const { result } = renderHook<StateSelector<MessageState, string[]>, string[]>(useStore, {
         initialProps: (s) => s.messages,
       });

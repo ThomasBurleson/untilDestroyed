@@ -1,4 +1,5 @@
-import { createStore, State, ComputedProperty, addComputedProperty, StateSelectorList } from '@mindspace-io/react-akita';
+import { FilteredMessages } from './filtered-messages';
+import { createStore, State, ComputedProperty, StateSelectorList } from '@mindspace-io/react-akita';
 
 
 const MESSAGES = [
@@ -50,22 +51,32 @@ export const selectViewModel = <StateSelectorList<MessagesState,ViewModel>> [
  *******************************************/
 
 
-export const useStore = createStore<MessagesState>((set) => ({
-  filterBy: '',
-  messages: MESSAGES,
+export const useStore = createStore<MessagesState>(({set, addComputedProperty}) => {
+  const state = {
+    // data
 
-  // Mutators
-  updateFilter(filterBy: string) {
-    set((s) => {
-      s.filterBy = filterBy;
-    });
-  },
+    filterBy: '',
+    messages: MESSAGES,
 
-  // Computed properties
-  filteredMessages: [], 
-}));
+    // Mutators
 
-addComputedProperty(useStore, computeFilteredMessages());
+    updateFilter(filterBy: string) {
+      set((s) => {
+        s.filterBy = filterBy;
+      });
+    },
+
+    // Computed properties 
+    // NOTE: these must be initializaed in state
+
+    filteredMessages: [], 
+  }
+  
+  addComputedProperty(makefilteredMessages());
+
+  return state;
+});
+
 
 // *************************************************
 // Private Utils
@@ -73,21 +84,21 @@ addComputedProperty(useStore, computeFilteredMessages());
 
 /**
  * Build computed property for `filteredMessages`
- * Uses an array of selectors for optimized change propagation
+ * Uses an array of selectors [<all messages>, <filterBy criteria>] 
+ * for optimized change propagation
  */
-function computeFilteredMessages(): ComputedProperty<MessagesState, string[] | string, string[]> {
-  
-  const getFilteredMessages = ([messages, filterBy]): string[] => {
-    const criteria = filterBy.toLowerCase();
+function makefilteredMessages(): ComputedProperty<MessagesState, string[] | string, string[]> {
+
+  // Note: onlyFilteredMessages() params depend upon the selector(s) defined!
+  const onlyFilteredMessages = ([messages, filterBy]): string[] => {
+    const criteria            = filterBy.toLowerCase();
     const containsFilterValue = (s:string) => (s.toLowerCase().indexOf(criteria) > -1);
     return !!filterBy ? messages.filter(containsFilterValue) : [...messages];
   };
-
   return {
     name: 'filteredMessages',
     selectors: [(s: MessagesState) => s.messages, (s: MessagesState) => s.filterBy] as any[],
-    predicate: getFilteredMessages, // Note: getFilteredMessages() params depend upon the selector(s) defined!
+    predicate: onlyFilteredMessages, 
   };
 }
-
 
