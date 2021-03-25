@@ -35,10 +35,10 @@ The beauty of the `createStore()` is that a factory function is used to build th
 And the factory function is actually provided the [`set`, `get`, ...] store api:
 
 ```ts
-import create from '@mindspace-io/react-akita';
+import { createStore, State } from '@mindspace-io/react-akita';
 
 // Define store structure
-interface StoreState {
+interface StoreState extends State {
   bears: number;
   increasePopulation: () => void;
   removeAllBears: () => void;
