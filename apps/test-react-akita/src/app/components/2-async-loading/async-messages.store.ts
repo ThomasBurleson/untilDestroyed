@@ -1,23 +1,5 @@
-import { createStore, State } from '@mindspace-io/react-akita';
-
-const EMAILS = [
-  'Adding Syntax Highlighting to MDX with Prism',
-  'Call ASAP: You have inherited $1M Dollars',
-  'Conversation Skills: Have a Great Conversation',
-  'The IRS has claimed your assets. Fix this now!',
-];
-
-class EmailService {
-  constructor(private delay = 3000) {}
-
-  loadAll(): Promise<string[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(EMAILS);
-      }, this.delay);
-    });
-  }
-}
+import { createStore, State, UseStore } from '@mindspace-io/react-akita';
+import { EmailService } from '../../services';
 
 /**********************************************
  *  Purpose:
@@ -42,48 +24,51 @@ export interface MessagesState extends State {
  * Instantiate store with state
  *******************************************/
 
-
-export const useStore = createStore<MessagesState>(({set, setIsLoading, applyTransaction }) => {
-  const service = new EmailService();
-  const startCountdown = () => {
-    const countDown = setInterval(() => {
-      set(s => { s.timeToReady -= 1})
-    },1000);
-    return () => clearInterval(countDown);
-  };
-  /**
-   * refresh()
-   * 
-   * 1) async loads messages, 
-   * 2) updates loading indicator
-   * 3) updates countdown timer
-   */
-  const refresh = async () => {
-
-    applyTransaction(() => {
-      setIsLoading();
-      set(s => { s.messages = [] });  
-    });
+export const makeStore = (emailService: EmailService): UseStore<MessagesState> => {
+  const useStore = createStore<MessagesState>(({set, setIsLoading, applyTransaction }) => {
     
-    const stopCountdown = startCountdown();
-    const messages = await service.loadAll();
+    const startCountdown = () => {
+      const countDown = setInterval(() => {
+        set(s => { s.timeToReady -= 1})
+      },1000);
+      return () => clearInterval(countDown);
+    };
+    /**
+     * refresh()
+     * 
+     * 1) async loads messages, 
+     * 2) updates loading indicator
+     * 3) updates countdown timer
+     */
+    const refresh = async () => {
 
-    applyTransaction(() =>{
-      set(s => {
-        s.messages = messages;
-        s.isLoading = false;
-        s.timeToReady = 3;
-      })       
-      stopCountdown();
+      applyTransaction(() => {
+        setIsLoading();
+        set(s => { s.messages = [] });  
+      });
+      
+      const stopCountdown = startCountdown();
+      const messages = await emailService.loadAll();
+
+      applyTransaction(() =>{
+        set(s => {
+          s.messages = messages;
+          s.isLoading = false;
+          s.timeToReady = 3;
+        })       
+        stopCountdown();
+      });
+    };
+
+    // Return state
+    return ({
+      messages   : [],
+      timeToReady: 3,
+      refresh
     });
-  };
-
-  // Return state
-  return ({
-    messages   : [],
-    timeToReady: 3,
-    refresh
   });
-});
+
+  return useStore;
+}
 
 

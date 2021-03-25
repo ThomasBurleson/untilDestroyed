@@ -1,7 +1,12 @@
-import React from 'react';
-import { useStore, MessagesState } from './async-messages.store';
+import React, { useContext, useState } from 'react';
+
+import { EmailService, EmailServiceContext } from '../../services';
+import { makeStore, MessagesState } from './async-messages.store';
 
 export const AsyncMessages: React.FC = () => {
+  const service = useContext<EmailService>(EmailServiceContext);
+  const [useStore] = useState(() => makeStore(service))
+
   const state: MessagesState = useStore();
 
   return (
