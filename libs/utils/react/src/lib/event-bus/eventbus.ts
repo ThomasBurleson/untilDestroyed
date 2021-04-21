@@ -13,6 +13,8 @@ export interface EmitEvent<K extends unknown> {
   data?: K;
 }
 
+export type EventRegistratons = Record<string, (data: any) => void>;
+
 export class ItemEvent<K> implements EmitEvent<K> {
   constructor(public type: string, public data: K) {}
 }
@@ -23,23 +25,32 @@ export const itemError = (error: any) => new ItemEvent(CollectionEvent.ITEM_ERRO
 
 const DestroyEvent = '[EventBus] destory';
 export const destroyEventBus = () => ({ type: DestroyEvent });
+
+type Unsubscribe = () => void;
+
 /**
  * Simply Pub/Sub mechanism that support decoupled communication between services
  * Note: This EventBus does cache the most recent event for EACH type...
  */
 export class EventBus {
   private cache: Record<string, EmitEvent<unknown>>;
+  private destroy$: Observable<EmitEvent<unknown>>;
   private emitter: Subject<EmitEvent<unknown>>;
 
   constructor() {
     this.cache = {};
     this.emitter = new Subject<EmitEvent<unknown>>();
 
-    // Enable events to stop internal subscriptions
-    const captureToCache = (e: EmitEvent<unknown>) => (this.cache[e.type] = e);
-    const destroy$ = this.emitter.pipe(filter(({ type }) => type === DestroyEvent));
+    this.listenForDestroy();
+    this.captureEvents();
+  }
 
-    this.emitter.pipe(tap(captureToCache), takeUntil(destroy$)).subscribe();
+  /**
+   * Public API to stop all current subscriptions
+   * and reset with clean EventBus
+   */
+  reset() {
+    this.emit(destroyEventBus());
   }
 
   /**
@@ -54,7 +65,7 @@ export class EventBus {
    * And provide single teardown to disconnect all
    * internal connections.
    */
-  onMany(collection: Record<string, (data: any) => void>): () => void {
+  onMany(collection: EventRegistratons): Unsubscribe {
     const eventKeys = Object.keys(collection);
     const connections = eventKeys.map((key) => this.on(key, collection[key]));
 
@@ -67,9 +78,10 @@ export class EventBus {
    * Listen on a single event, extract data
    * Publish a teardown function to disconnect later
    */
-  on<T>(event: string, notify: (data: T) => void): () => void {
+  on<T>(event: string, notify: (data: T) => void): Unsubscribe {
     const watch$ = this.emitter.pipe(
       startWith(this.cache[event]),
+      takeUntil(this.destroy$),
       filter((e: EmitEvent<T>) => e?.type === event),
       map((e: EmitEvent<T>) => e.data)
     );
@@ -83,9 +95,29 @@ export class EventBus {
    */
   observableFor<T>(event: string): Observable<T> {
     const watch$ = this.emitter.pipe(
+      takeUntil(this.destroy$),
       filter((e: EmitEvent<T>) => e.type === event),
       map((e: EmitEvent<T>) => e.data)
     );
     return watch$;
+  }
+
+  /**
+   * Enable events to stop ALL subscriptions
+   * Create special stream that ONLY emits destroy events
+   */
+  private listenForDestroy() {
+    const clearCache = () => (this.cache = {});
+    const onlyDestroyEvents = ({ type }: EmitEvent<unknown>) => type === DestroyEvent;
+    this.destroy$ = this.emitter.pipe(filter(onlyDestroyEvents), tap(clearCache));
+  }
+
+  /**
+   * Activate event interceptor to record last emission for each event type
+   * NOTE: do not capture the 'destroy' event
+   */
+  private captureEvents() {
+    const captureToCache = (e: EmitEvent<unknown>) => (this.cache[e.type] = e);
+    this.emitter.pipe(takeUntil(this.destroy$), tap(captureToCache)).subscribe();
   }
 }

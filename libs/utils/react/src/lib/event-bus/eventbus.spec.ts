@@ -21,7 +21,7 @@ describe('EventBus', () => {
   });
 
   afterEach(() => {
-    unsubscribe();
+    eventBus.reset();
   });
 
   it('should emit events', () => {
@@ -133,7 +133,9 @@ describe('EventBus', () => {
 
     it('should subscribe to "most recent" past events using onMany()', () => {
       let count = 0;
-      const trackCount = () => (count += 1);
+      const trackCount = () => {
+        count += 1;
+      };
 
       eventBus.emit(createEvent(SESSION.STARTED, 43));
       eventBus.emit(createEvent(SESSION.STOPPED));
