@@ -47,7 +47,7 @@ export const InjectorContext = createContext<DependencyInjector>(null!);
  *
  * @returns [notifyFn, listenerFn]
  */
-const useEventBus = (): HookResponse => {
+export const useEventBus = (): HookResponse => {
   const injector = useContext(InjectorContext);
   const [eventBus] = useState<EventBus>(() => injector.get(EventBus));
   const [registry, setRegistry] = useState<Unsubscribe[]>([]);
