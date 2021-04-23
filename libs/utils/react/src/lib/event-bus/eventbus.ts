@@ -1,4 +1,4 @@
-import { Subject, Observable } from 'rxjs';
+import { Subject, Observable, of } from 'rxjs';
 import { filter, map, startWith, tap, takeUntil } from 'rxjs/operators';
 
 export enum CollectionEvent {
@@ -33,13 +33,14 @@ type Unsubscribe = () => void;
  * Note: This EventBus does cache the most recent event for EACH type...
  */
 export class EventBus {
-  private cache: Record<string, EmitEvent<unknown>>;
-  private destroy$: Observable<EmitEvent<unknown>>;
-  private emitter: Subject<EmitEvent<unknown>>;
+  private cache: Record<string, EmitEvent<any>>;
+  private emitter: Subject<EmitEvent<any>>;
+  private destroy$: Observable<EmitEvent<any>>;
 
-  constructor() {
+  constructor(private enableLogs = false) {
     this.cache = {};
-    this.emitter = new Subject<EmitEvent<unknown>>();
+    this.destroy$ = of({ type: 'waiting' });
+    this.emitter = new Subject<EmitEvent<any>>();
 
     this.listenForDestroy();
     this.captureEvents();
@@ -57,6 +58,7 @@ export class EventBus {
    * Emit an event to all listeners on this messaging queu
    */
   emit(event: EmitEvent<any>) {
+    this.enableLogs && console.log(`[EventBus] emit(${event.type})`);
     this.emitter.next(event);
   }
 
@@ -85,7 +87,10 @@ export class EventBus {
       filter((e: EmitEvent<T>) => e?.type === event),
       map((e: EmitEvent<T>) => e.data)
     );
-    const subscription = watch$.subscribe(notify);
+    const subscription = watch$.subscribe((data) => {
+      this.enableLogs && console.log(`[EventBus] on(${event})`);
+      notify(data as T);
+    });
 
     return subscription.unsubscribe.bind(subscription);
   }
@@ -99,7 +104,7 @@ export class EventBus {
       filter((e: EmitEvent<T>) => e.type === event),
       map((e: EmitEvent<T>) => e.data)
     );
-    return watch$;
+    return watch$ as Observable<T>;
   }
 
   /**

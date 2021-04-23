@@ -12,7 +12,7 @@ import {
   combineQueries,
 } from '@datorama/akita';
 
-import { useObservable } from './useObservable';
+import { useObservable } from '../hooks/useObservable';
 
 import {
   Destroy,
@@ -38,7 +38,7 @@ import {
   UseStore,
   StateSelectorList,
   OnInitialized,
-} from './store.interfaces';
+} from './reactive-store.interfaces';
 
 import { isDev } from '../env';
 

@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 
-import { createStore } from './useStore';
-import { StateSelector, UseStore, State, GetState } from './store.interfaces';
+import { createStore } from './reactive-store';
+import { StateSelector, UseStore, State, GetState } from './reactive-store.interfaces';
 
 // ************************************
 // Define custom types for testing only
