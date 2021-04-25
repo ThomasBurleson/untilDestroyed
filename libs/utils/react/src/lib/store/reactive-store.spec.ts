@@ -1,4 +1,6 @@
+import { InjectionToken } from './../di/injector.token';
 import { renderHook, act } from '@testing-library/react-hooks';
+import { makeInjector } from '../di';
 
 import { createStore } from './reactive-store';
 import { StateSelector, UseStore, State, GetState } from './reactive-store.interfaces';
@@ -519,6 +521,20 @@ describe('UseStore state management', () => {
       expect(result.current.numMessages).toBe(4);
       expect(watchedCounter).toBe(2);
     });
+  });
+
+  describe('from DependencyInjection', () => {
+    const hookToken = new InjectionToken('[useStore hook]');
+    const createStoreWith = () => {
+      const useStore = createStore(({ set }) => ({
+        emails: ['ThomasBurleson@gmail.com'],
+        saveEmails: (emails) => set({ emails }),
+      }));
+      return useStore;
+    };
+    const injector = makeInjector([{ provide: hookToken, useFactory: () => createStoreWith() }]);
+
+    expect(injector.get(hookToken)).toBe(injector.get(hookToken));
   });
 });
 

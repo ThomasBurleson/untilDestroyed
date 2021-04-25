@@ -145,8 +145,11 @@ class Injector implements DependencyInjector {
       return token;
     }
 
-    let result = this.singletons.get(token) || this.instanceOf(token);
-    result && this.singletons.set(token, result);
+    let result = this.singletons.get(token);
+    if (!result) {
+      result = this.instanceOf(token);
+      this.singletons.set(token, result);
+    }
 
     return result;
   }

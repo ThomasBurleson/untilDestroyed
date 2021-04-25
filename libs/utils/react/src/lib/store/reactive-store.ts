@@ -12,7 +12,7 @@ import {
   combineQueries,
 } from '@datorama/akita';
 
-import { useObservable } from '../hooks/useObservable';
+import { useObservable } from '../hooks';
 
 import {
   Destroy,

@@ -1,4 +1,18 @@
-import { DependencyInjector, Token } from '../di';
+import { Context, useContext } from 'react';
+
+import { Token, InjectorContext, DependencyInjector } from '../di';
+
+/**
+ * Return either the injector instance or the token lookup FROM the
+ * injector.
+ *
+ * @returns T is either the DependencyInjector or the injector token lookup.
+ */
+export const useDependencyInjector = <T extends unknown>(token?: Token, context?: Context<DependencyInjector>): T => {
+  const injector = useContext(context || InjectorContext);
+
+  return (token ? injector.get(token) : injector) as T;
+};
 
 export type HookTuple<V, I extends DependencyInjector> = [V, I]; // Array of value + injector
 
@@ -23,7 +37,13 @@ export type HookTuple<V, I extends DependencyInjector> = [V, I]; // Array of val
  * @param injector Custom DependencyInjector
  * @param token Token type of string, Class, or InjectionToken
  */
-export function useInjectorHook<T extends Token>( token: T, injector: DependencyInjector): HookTuple<any, DependencyInjector>;
-export function useInjectorHook<T extends Token, V>(token: T, injector: DependencyInjector): HookTuple<V, DependencyInjector> {
+export function useInjectorHook<T extends Token>(
+  token: T,
+  injector: DependencyInjector
+): HookTuple<any, DependencyInjector>;
+export function useInjectorHook<T extends Token, V>(
+  token: T,
+  injector: DependencyInjector
+): HookTuple<V, DependencyInjector> {
   return [injector.get(token) as V, injector];
 }

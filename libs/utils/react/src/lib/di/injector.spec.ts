@@ -1,6 +1,8 @@
-import { InjectionToken } from './injection-token';
-import { DependencyInjector, UndoChanges } from './injector.interfaces';
 import { makeInjector } from './injector';
+import { InjectionToken } from './injector.token';
+import { DependencyInjector, UndoChanges } from './injector.interfaces';
+
+const HookToken = new InjectionToken("[Hook] Test function requests");   
 
 describe('DependencyInjector', () => {
   let parent: DependencyInjector;
@@ -48,6 +50,48 @@ describe('DependencyInjector', () => {
       expect(instD.b.title).toBe("MockB");
     });    
 
+
+    it('should undo changes after addProviders()', () => {
+      const undoChanges: UndoChanges = injector.addProviders([ 
+        { provide: MSG_TOKEN, useFactory: () => "windy" } 
+      ]);
+      
+      let instA: A = injector.get(A);
+      expect(instA.title).toBe("A");
+      expect(instA.msg).toBe("windy");
+
+      undoChanges();
+      instA = injector.get(A);
+      
+      expect(instA.msg).toBe("Hello Thomas");
+    });  
+    
+    it('build a Facade with shared Store', () => {
+      const [injectorF, tokenF] = makeFacadeInjector();
+      const instF: Facade = injectorF.get(Facade);
+
+      expect(instF).toBeDefined();
+      expect(instF.store === instF.query.store).toBeTruthy();
+    });
+
+  });  
+
+  describe('with useFactory', () => {
+    beforeEach(() => {
+      const [injectorA, tokenA] = makeTestInjector();
+
+      injector = injectorA;
+      MSG_TOKEN = tokenA;
+    })
+
+    it('should cache function instance from useFactory', () => {
+      const inst1 = injector.get(HookToken);
+      const inst2 = injector.get(HookToken);
+
+      expect(inst1 === inst2).toBe(true);
+      expect(inst1().msg).toBe('Hook response Hello Thomas') 
+    })
+
     it('should allow A deps overrides with useFactory', () => {
       injector.addProviders([ { provide: MSG_TOKEN, useFactory: () => "windy" } ])
       const instA: A = injector.get(A);
@@ -86,32 +130,9 @@ describe('DependencyInjector', () => {
       expect(instA.title).toBe("A");
       expect(instA.msg).toBe("windy-4");
     }); 
+  })
 
-    it('should undo changes after addProviders()', () => {
-      const undoChanges: UndoChanges = injector.addProviders([ 
-        { provide: MSG_TOKEN, useFactory: () => "windy" } 
-      ]);
-      
-      let instA: A = injector.get(A);
-      expect(instA.title).toBe("A");
-      expect(instA.msg).toBe("windy");
-
-      undoChanges();
-      instA = injector.get(A);
-      
-      expect(instA.msg).toBe("Hello Thomas");
-    });  
-    
-    it('build a Facade with shared Store', () => {
-      const [injectorF, tokenF] = makeFacadeInjector();
-      const instF: Facade = injectorF.get(Facade);
-
-      expect(instF).toBeDefined();
-      expect(instF.store === instF.query.store).toBeTruthy();
-    });
-
-  });  
-
+  
   describe('with parent injector', () => {
     beforeEach(() => {
       const [parentA, tokenA] = makeTestInjector();
@@ -223,17 +244,21 @@ describe('DependencyInjector', () => {
     });
 
   });  
+
+  
 });
 
 
+
 function makeTestInjector(): [ DependencyInjector, InjectionToken<string> ] {
-  const token = new InjectionToken("injector.spec.ts - msg");
+  const token = new InjectionToken("injector.spec.ts - msg");  
   const injector = makeInjector([
     { provide: token, useValue: "Hello Thomas"},
     { provide: A, useClass: A, deps:[token]},
     { provide: B, useClass: B, deps:[A]},
     { provide: C, useClass: C, deps:[A]},
     { provide: D, useClass: D, deps:[B, C]},
+    { provide: HookToken, useFactory: (msg) => () => ({msg: `Hook response ${msg}`}), deps: [token] },
   ]);
   
   return [injector, token];

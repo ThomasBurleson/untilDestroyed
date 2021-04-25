@@ -38,8 +38,8 @@ export interface WatchProperty<T extends State> {
 
 export interface ComputedProperty<T extends State, K, U> {
   name: string; // name of computed property
-  selectors: StateSelectorList<T, K> | StateSelector<T, K>; // single or multiple selectors
-  transform: (values: K[] | K) => U; // internally uses RxJS combineLatest() operator
+  selectors: StateSelectorList<T, any> | StateSelector<T, K>; // single or multiple selectors
+  transform: (values: any) => U; // internally uses RxJS combineLatest() operator
   initialValue?: U | (() => U);
 }
 

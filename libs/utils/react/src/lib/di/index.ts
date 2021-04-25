@@ -1,4 +1,5 @@
 export * from './type';
 export * from './injector';
-export * from './injection-token';
-export *  from './injector.interfaces';
+export * from './injector.context';
+export * from './injector.interfaces';
+export * from './injector.token';

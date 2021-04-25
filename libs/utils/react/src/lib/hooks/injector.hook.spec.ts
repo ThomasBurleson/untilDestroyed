@@ -1,5 +1,5 @@
 import { InjectionToken, DependencyInjector, makeInjector, UndoChanges } from '../di';
-import { useInjectorHook, HookTuple } from './useInjector';
+import { useInjectorHook, HookTuple } from './injector.hook';
 
 describe('useInjector', () => {
   let injector: DependencyInjector;
@@ -77,7 +77,7 @@ function makeTestInjector(): [DependencyInjector, InjectionToken<string>] {
     { provide: A, useClass: A, deps: [token] },
     { provide: B, useClass: B, deps: [A] },
     { provide: C, useClass: C, deps: [A] },
-    { provide: D, useClass: D, deps: [B, C] }
+    { provide: D, useClass: D, deps: [B, C] },
   ]);
   return [injector, token];
 }

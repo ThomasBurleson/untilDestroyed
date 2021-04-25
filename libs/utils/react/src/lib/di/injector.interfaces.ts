@@ -1,5 +1,5 @@
 import { Type } from './type';
-import { InjectionToken } from './injection-token';
+import { InjectionToken } from './injector.token';
 
 export type Token = String | Number | InjectionToken<string> | (new (...args: any[]) => any);
 

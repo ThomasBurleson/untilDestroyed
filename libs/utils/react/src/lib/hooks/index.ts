@@ -1,2 +1,2 @@
-export * from './useInjector';
-export * from './useObservable';
+export * from './observable.hook';
+export * from './injector.hook';
