@@ -1,13 +1,17 @@
+import { Paginator } from '../utils';
+
 /**
  * State types (inspired/copied from Zustand)
  *
  * types inspired by setState from React, see:
  * https://github.com/DefinitelyTyped/DefinitelyTyped/blob/6c49e45842358ba59a508e13130791989911430d/types/react/v16/index.d.ts#L489-L495
  */
-export type Status = Partial<{ isLoading: boolean; error: unknown }>;
-export type CustomValue = string | number | symbol | object;
+export type PaginationState = { pagination?: Paginator<unknown> };
+export type StatusState = Partial<{ isLoading: boolean; error: unknown }>;
 export type CustomState = Record<string | number | symbol, unknown>;
-export type State = CustomState & Status;
+export type State = CustomState & PaginationState & StatusState;
+
+export type CustomValue = string | number | symbol | object;
 
 export type SetLoading = (isLoading?: boolean) => void;
 export type SetError = (error: unknown) => void;
@@ -15,6 +19,7 @@ export interface StatusAPI {
   setError: SetError;
   setIsLoading: SetLoading;
 }
+export type SetPaginationSource = <T extends unknown>(list: T[], pageSize?: number) => void;
 
 export type PartialState<T extends State, K extends keyof T = keyof T> =
   | (Pick<T, K> | T)
@@ -81,6 +86,7 @@ export interface StoreAPI<T extends State> {
   applyTransaction: ApplyTransaction<T>;
   addComputedProperty: AddComputedProperty<T>;
   watchProperty: WatchProperty<T>;
+  paginate: SetPaginationSource;
   setIsLoading: SetLoading;
   setError: SetError;
 }

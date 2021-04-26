@@ -20,9 +20,9 @@ type MessageState = {
 };
 
 interface EmailState extends State {
-  numViews?: number;
   emails: string[];
-  saveEmails: (list: string[]) => void;
+  numViews?: number;
+  saveEmails?: (list: string[]) => void;
 }
 
 type EmailList = string[];
@@ -225,6 +225,78 @@ describe('UseStore state management', () => {
       expect(notified).toBe(1);
       useStore.reset();
       expect(notified).toBe(1);
+    });
+  });
+
+  describe('createStore() with pagination', () => {
+    let useStore: UseStore<EmailState>;
+
+    afterEach(() => {
+      useStore.destroy();
+    });
+
+    it('should inject pagination state', (done) => {
+      useStore = createStore<EmailState>(({ set, get, paginate }, onInit) => {
+        const store = {
+          emails: [...new Array(90).keys()].map((v) => String(v + 1)),
+        };
+        onInit(() => {
+          paginate(get().emails, 20);
+
+          const { paginatedList, totalPages, goToPage } = get().pagination;
+
+          expect(totalPages).toBe(5); // 90/20 > 4
+          expect(paginatedList.length).toBe(20);
+          expect(goToPage).toBeDefined();
+
+          done();
+        });
+
+        return store;
+      });
+    });
+
+    it('should paginate without affecting other state values', (done) => {
+      const rawList = [...new Array(90).keys()].map((v) => String(v + 1));
+      useStore = createStore<EmailState>(({ set, get, paginate }, onInit) => {
+        const store = {
+          emails: [],
+        };
+        onInit(() => {
+          paginate(rawList, 20); // only paginate 'rawlist'
+          const { paginatedList } = get().pagination;
+
+          expect(paginatedList.length).toBe(20);
+          expect(get().emails.length).toBe(0);
+
+          done();
+        });
+
+        return store;
+      });
+    });
+
+    it('should navigate paged data', (done) => {
+      const rawList = [...new Array(90).keys()].map((v) => String(v + 1));
+
+      useStore = createStore<EmailState>(({ set, get, paginate }, onInit) => {
+        const store = { emails: [] };
+        onInit(() => {
+          paginate<string>(rawList, 20);
+
+          expect(get().pagination.paginatedList[0]).toBe('1');
+          expect(get().pagination.currentPage).toBe(1);
+
+          get().pagination.goToPage(2); // mutates pagination state; hence 'get().pagination...'
+
+          expect(get().pagination.paginatedList[0]).toBe('21');
+          expect(get().pagination.currentPage).toBe(2);
+
+          done();
+        });
+
+        return store;
+      });
     });
   });
   describe('creates a store hook `useStore`', () => {

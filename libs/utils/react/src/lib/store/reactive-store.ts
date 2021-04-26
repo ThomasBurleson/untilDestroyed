@@ -13,6 +13,7 @@ import {
 } from '@datorama/akita';
 
 import { useObservable } from '../hooks';
+import { DataPaginator } from '../utils';
 
 import {
   Destroy,
@@ -41,6 +42,7 @@ import {
 } from './reactive-store.interfaces';
 
 import { isDev } from '../env';
+import { Paginator } from '../utils';
 
 // For server-side rendering: https://github.com/react-spring/zustand/pull/34
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
@@ -71,15 +73,17 @@ export function createStore<TState extends State>(
     completed: false,
     registerOnInit: (notifyMe: OnInitialized) => {
       initializer.onInit = () => {
+        initializer.completed = true;
+
         const unsubscribe = notifyMe();
         initializer.onDestroy = !!unsubscribe && typeof unsubscribe === 'function' ? unsubscribe : NOOP;
-        initializer.completed = true;
       };
     },
     onInit: NOOP, // call when initialization is done and ready to notify store
     onDestroy: NOOP, // call to store is destroyed and cleanup from onReady() activity
   };
 
+  let paginator = new DataPaginator<unknown>();
   const computed: Record<string, (() => Unsubscribe) | (() => void)> = {};
 
   const name = options.storeName || `ReactAkitStore${Math.random()}`;
@@ -263,6 +267,35 @@ export function createStore<TState extends State>(
   };
 
   /**
+   * Optional Paginator API available within the createStore factory
+   */
+  const paginate = <T extends unknown>(rawList: T[], pageSize = 20) => {
+    if (!initializer.completed) {
+      console.error('paginate() cannot be called before onInit()');
+    }
+    paginator = new DataPaginator<T>(rawList, pageSize);
+
+    const { totalPages, currentPage, paginatedList } = paginator;
+    const goToPage = (page: number) => {
+      const results = paginator.goToPage(page);
+      setState((s) => {
+        s.pagination.paginatedList = results;
+        s.pagination.currentPage = page;
+      });
+      return results;
+    };
+
+    setState((s) => {
+      s.pagination = {
+        totalPages,
+        currentPage,
+        paginatedList,
+        pageSize,
+        goToPage,
+      };
+    });
+  };
+  /**
    * Create the Store instance with desired API
    */
   const storeAPI: StoreAPI<TState> = {
@@ -273,6 +306,7 @@ export function createStore<TState extends State>(
     watchProperty: watchProperty, // watch single property for changes
     setIsLoading, // easily set isLoading state
     setError, // easily set error state
+    paginate, // easily set pagination state and API for target dataset
   };
 
   const hookAPI: HookAPI<TState> = {
@@ -346,6 +380,7 @@ export function createStore<TState extends State>(
   const initializeStore = () => {
     initializer.state = produce({}, () => ({
       ...{ error: null, isLoading: false }, // start with default error/loading state
+      ...{ paginatedList: [], currentPage: 1, totalPages: 1, pageSize: 20 },
       ...createState(
         { ...storeAPI, ...hookAPI }, // provide to custom store internal functions
         initializer.registerOnInit // enable custom store to register for useStoreEffect notifications
