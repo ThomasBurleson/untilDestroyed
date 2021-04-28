@@ -20,7 +20,7 @@ export interface StatusAPI {
   setIsLoading: SetLoading;
 }
 
-export type SourceFactoryFn = (args: any[]) => any;
+export type SourceFactoryFn = (...args: any[]) => any;
 export interface SetPaginationSource {
   (list: any[], pageSize?: number): any[];
   on(target: SourceFactoryFn, pageSize?: number): SourceFactoryFn;
