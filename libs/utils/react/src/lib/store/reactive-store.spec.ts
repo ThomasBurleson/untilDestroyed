@@ -276,6 +276,57 @@ describe('UseStore state management', () => {
       });
     });
 
+    it('should paginate computed properties', async () => {
+      const rawList = [...new Array(200).keys()].map((v) => String(v + 1));
+      const evenValuesOnly = (list: string[]) => list.filter((it, i) => i % 2 == 0);
+      const squashList = (list: string[]) => list.slice(0, Math.floor(list.length / 2));
+
+      const hook = createStore<any>(({ set, addComputedProperty, paginate }) => {
+        const store = {
+          allKeys: [...rawList],
+          evenKeys: [],
+          compress: () => {
+            set((s) => {
+              const { allKeys } = s;
+              s.allKeys = squashList(allKeys);
+            });
+          },
+        };
+
+        return addComputedProperty(store, {
+          name: 'evenKeys',
+          selectors: (s) => s.allKeys,
+          transform: (allKeys: string[]) => {
+            return paginate(evenValuesOnly(allKeys), 40);
+          },
+        });
+      });
+
+      // need to wait for computed property async initialization
+      let { result, waitForNextUpdate } = renderHook<UseStore<any>, any>(hook);
+      await waitForNextUpdate();
+
+      const store1 = result.current;
+      expect(store1.evenKeys.length).toBe(100);
+      expect(store1.pagination.paginatedList.length).toBe(40);
+      expect(store1.pagination.totalPages).toBe(3);
+
+      act(() => {
+        // compressing 'allkeys' recomputes 'evenKeys';
+        // which triggers pagination updates
+        store1.compress();
+      });
+
+      await waitForNextUpdate();
+
+      const store2 = result.current;
+      expect(store2.evenKeys.length).toBe(50);
+      expect(store2.pagination.paginatedList.length).toBe(40);
+      expect(store2.pagination.totalPages).toBe(2);
+
+      hook.destroy();
+    });
+
     it('should navigate paged data', (done) => {
       const rawList = [...new Array(90).keys()].map((v) => String(v + 1));
 
@@ -299,6 +350,7 @@ describe('UseStore state management', () => {
       });
     });
   });
+
   describe('creates a store hook `useStore`', () => {
     let useStore: UseStore<EmailState>;
 

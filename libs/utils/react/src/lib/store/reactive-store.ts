@@ -167,23 +167,23 @@ export function createStore<TState extends State>(
 
     list.map((it) => {
       const deferredSetup = () => {
-        validateComputedProperty(store, it);
+        if (validateComputedProperty(store, it)) {
+          const makeQuery = (predicate) => query.select(predicate);
+          const selectors = normalizeSelector(it.selectors);
+          const emitters: Observable<any>[] = selectors.map(makeQuery);
+          const source$ = emitters.length > 1 ? combineQueries([...emitters, recompute.asObservable()]) : emitters[0];
+          const subscription = source$.pipe(map(it.transform), debounceTime(1)).subscribe((computedValue: unknown) => {
+            setState((s) => ({ ...s, [it.name]: computedValue }));
+          });
 
-        const makeQuery = (predicate) => query.select(predicate);
-        const selectors = normalizeSelector(it.selectors);
-        const emitters: Observable<any>[] = selectors.map(makeQuery);
-        const source$ = emitters.length > 1 ? combineQueries([...emitters, recompute.asObservable()]) : emitters[0];
-        const subscription = source$.pipe(map(it.transform), debounceTime(1)).subscribe((computedValue: unknown) => {
-          setState((s) => ({ ...s, [it.name]: computedValue }));
-        });
-
-        if (!!it.initialValue) {
-          const initialValue =
-            typeof it.initialValue === 'function' ? (it.initialValue as Function)() : it.initialValue;
-          setState((s) => ({ ...s, [it.name]: initialValue }));
+          if (!!it.initialValue) {
+            const initialValue =
+              typeof it.initialValue === 'function' ? (it.initialValue as Function)() : it.initialValue;
+            setState((s) => ({ ...s, [it.name]: initialValue }));
+          }
+          return () => subscription.unsubscribe();
         }
-
-        return () => subscription.unsubscribe();
+        throw new Error('[createStore::addComputedProperty()] Invalid Store Selectors');
       };
 
       computed[it.name] = !initializer.completed ? deferredSetup : deferredSetup();
@@ -268,11 +268,14 @@ export function createStore<TState extends State>(
 
   /**
    * Optional Paginator API available within the createStore factory
+   *
+   * The target 'rawlist' is unaffected and passed thru...Meanwhile,
+   * the paginated list internally manages a clone of original target 'rawlist'
    */
-  const paginate = <T extends unknown>(rawList: T[], pageSize = 20) => {
-    if (!initializer.completed) {
-      console.error('paginate() cannot be called before onInit()');
-    }
+  const paginate = <T extends unknown>(rawList: T[], pageSize = 20): T[] => {
+    // if (!initializer.completed) {
+    //   console.error('paginate() cannot be called before onInit()');
+    // }
     paginator = new DataPaginator<T>(rawList, pageSize);
 
     const { totalPages, currentPage, paginatedList } = paginator;
@@ -294,6 +297,8 @@ export function createStore<TState extends State>(
         goToPage,
       };
     });
+
+    return rawList;
   };
   /**
    * Create the Store instance with desired API
@@ -447,17 +452,15 @@ function normalizeProperties<TState extends State, K, U>(
  *  - are you using 2 or more state selectors
  */
 function validateComputedProperty<T extends State, K extends any, U>(store: T, property: ComputedProperty<T, K, U>) {
-  if (validateWatchedProperty(store, property.name, 'ComputedProperty')) {
-    if (isDev()) {
-      // const selectors = normalizeSelector(property.selectors);
-      // if (selectors.length < 2) {
-      //   console.warn(`
-      //   ComputedProperty '${property.name}' is used to derive a new property value from 2 or more state properties.
-      //   For distinct, memoized computations, your 'ComputedProperty::selectors' _should_ specify 2 or more selectors .
-      // `);
-      // }
-    }
+  const isValidProperty = validateWatchedProperty(store, property.name, 'ComputedProperty');
+  const validSelectors = validateSelectors(store, property.selectors);
+  if (!validateSelectors) {
+    console.error(`
+      ComputedProperty '${property.name}' cannot select the store. 
+      Please specify 1 or more properites within the store.    
+    `);
   }
+  return isValidProperty && validSelectors;
 }
 
 /**
@@ -467,10 +470,25 @@ function validateComputedProperty<T extends State, K extends any, U>(store: T, p
  */
 function validateWatchedProperty<T extends State>(store: T, name: string, fieldType = 'WatchProperty') {
   const hasProperty = store.hasOwnProperty(name);
-  if (!hasProperty) {
+  if (!hasProperty && isDev()) {
     console.warn(`
       ${fieldType} '${name}' may not be a valid property in your store. 
     `);
   }
   return hasProperty;
+}
+
+/**
+ * No selector is allowed to select entire store/state
+ * @param store
+ * @param current List of state selectors OR a single selector
+ * @returns boolean All selectors are valid
+ */
+function validateSelectors<T extends State, K extends any, U>(
+  store: T,
+  current: StateSelectorList<T, any> | StateSelector<T, K>
+): boolean {
+  const selectors = normalizeSelector(current);
+  const test = (selector: StateSelector<T, K>) => selector(store) != store;
+  return selectors.reduce((valid, sel) => valid && test(sel), true);
 }
