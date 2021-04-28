@@ -276,7 +276,7 @@ export function createStore<TState extends State>(
   const paginate = <T extends unknown>(rawList: T[], pageSize = 20): T[] => {
     paginator = new DataPaginator<T>(rawList, pageSize);
 
-    const { totalPages, currentPage, paginatedList } = paginator;
+    const { totalCount, totalPages, currentPage, paginatedList } = paginator;
     const goToPage = (page: number) => {
       const results = paginator.goToPage(page);
       setState((s) => {
@@ -288,6 +288,7 @@ export function createStore<TState extends State>(
 
     setState((s) => {
       s.pagination = {
+        totalCount,
         totalPages,
         currentPage,
         paginatedList,

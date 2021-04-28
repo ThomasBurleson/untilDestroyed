@@ -2,9 +2,10 @@ export const PAGE_SIZE = 20;
 
 export interface PaginatorData<T> {
   paginatedList: T[];
-  totalPages: number;
   currentPage: number;
   pageSize: number;
+  totalPages: number;
+  totalCount: number;
 }
 
 export interface Paginator<T> extends PaginatorData<T> {
@@ -43,6 +44,9 @@ export class DataPaginator<T> implements Paginator<T> {
   private _paginatedList: T[] | null;
   private _totalPages = 0;
 
+  get totalCount(): number {
+    return this._rawList.length;
+  }
   /**
    * Read-only accessor
    */
