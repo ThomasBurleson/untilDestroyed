@@ -19,7 +19,12 @@ export interface StatusAPI {
   setError: SetError;
   setIsLoading: SetLoading;
 }
-export type SetPaginationSource = <T extends unknown>(list: T[], pageSize?: number) => T[];
+
+export type SourceFactoryFn = (args: any[]) => any;
+export interface SetPaginationSource {
+  (list: any[], pageSize?: number): any[];
+  on(target: SourceFactoryFn, pageSize?: number): SourceFactoryFn;
+}
 
 export type PartialState<T extends State, K extends keyof T = keyof T> =
   | (Pick<T, K> | T)

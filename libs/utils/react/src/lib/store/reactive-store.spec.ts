@@ -235,41 +235,36 @@ describe('UseStore state management', () => {
       useStore.destroy();
     });
 
-    it('should inject pagination state', (done) => {
-      useStore = createStore<EmailState>(({ set, get, paginate }, onInit) => {
-        const store = {
-          emails: [...new Array(90).keys()].map((v) => String(v + 1)),
-        };
+    it('should inject pagination state', () => {
+      useStore = createStore<EmailState>(({ get, paginate }, onInit) => {
+        const rawList = [...new Array(90).keys()].map((v) => String(v + 1));
+        const store = { emails: rawList };
+
         onInit(() => {
-          paginate(get().emails, 20);
+          paginate(rawList, 20);
 
           const { paginatedList, totalPages, goToPage } = get().pagination;
 
           expect(totalPages).toBe(5); // 90/20 > 4
           expect(paginatedList.length).toBe(20);
           expect(goToPage).toBeDefined();
-
-          done();
         });
 
         return store;
       });
     });
 
-    it('should paginate without affecting other state values', (done) => {
+    it('should paginate without affecting other state values', () => {
       const rawList = [...new Array(90).keys()].map((v) => String(v + 1));
       useStore = createStore<EmailState>(({ set, get, paginate }, onInit) => {
-        const store = {
-          emails: [],
-        };
+        const store = { emails: [] };
+
         onInit(() => {
           paginate(rawList, 20); // only paginate 'rawlist'
           const { paginatedList } = get().pagination;
 
           expect(paginatedList.length).toBe(20);
           expect(get().emails.length).toBe(0);
-
-          done();
         });
 
         return store;
@@ -327,13 +322,47 @@ describe('UseStore state management', () => {
       hook.destroy();
     });
 
+    it('should use paginate.on() to tailhook another function', async () => {
+      const rawList = [...new Array(200).keys()].map((v) => String(v + 1));
+      const evenValuesOnly = (list: string[]) => list.filter((it, i) => i % 2 == 0);
+      const squashList = (list: string[]) => list.slice(0, Math.floor(list.length / 2));
+
+      const hook = createStore<any>(({ set, addComputedProperty, paginate }) => {
+        const store = {
+          allKeys: [...rawList],
+          evenKeys: [],
+          compress: () => {
+            set((s) => {
+              const { allKeys } = s;
+              s.allKeys = squashList(allKeys);
+            });
+          },
+        };
+
+        return addComputedProperty(store, {
+          name: 'evenKeys',
+          selectors: (s) => s.allKeys,
+          transform: paginate.on(evenValuesOnly, 40),
+        });
+      });
+
+      // need to wait for computed property async initialization
+      let { result, waitForNextUpdate } = renderHook<UseStore<any>, any>(hook);
+      await waitForNextUpdate();
+
+      const store1 = result.current;
+      expect(store1.evenKeys.length).toBe(100);
+      expect(store1.pagination.paginatedList.length).toBe(40);
+      expect(store1.pagination.totalPages).toBe(3);
+    });
+
     it('should navigate paged data', (done) => {
       const rawList = [...new Array(90).keys()].map((v) => String(v + 1));
 
       useStore = createStore<EmailState>(({ set, get, paginate }, onInit) => {
         const store = { emails: [] };
         onInit(() => {
-          paginate<string>(rawList, 20);
+          paginate(rawList, 20);
 
           expect(get().pagination.paginatedList[0]).toBe('1');
           expect(get().pagination.currentPage).toBe(1);

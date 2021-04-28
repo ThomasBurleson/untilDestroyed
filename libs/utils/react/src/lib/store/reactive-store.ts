@@ -39,6 +39,7 @@ import {
   UseStore,
   StateSelectorList,
   OnInitialized,
+  SourceFactoryFn,
 } from './reactive-store.interfaces';
 
 import { isDev } from '../env';
@@ -273,9 +274,6 @@ export function createStore<TState extends State>(
    * the paginated list internally manages a clone of original target 'rawlist'
    */
   const paginate = <T extends unknown>(rawList: T[], pageSize = 20): T[] => {
-    // if (!initializer.completed) {
-    //   console.error('paginate() cannot be called before onInit()');
-    // }
     paginator = new DataPaginator<T>(rawList, pageSize);
 
     const { totalPages, currentPage, paginatedList } = paginator;
@@ -300,6 +298,25 @@ export function createStore<TState extends State>(
 
     return rawList;
   };
+
+  /**
+   * Decorate the paginate function with a tail-hook;
+   * to allow the `paginate()` feature to compose 'on' another function
+   * e.g
+   *    addComputedProperty(store, {
+   *      name: 'evenKeys',
+   *      selectors: (s) => s.allKeys,
+   *      transform: paginate.on(computeEvenKeys)
+   *    });
+   *
+   */
+  paginate.on = (fn: SourceFactoryFn, pageSize = 20): SourceFactoryFn => {
+    return (...args: any[]) => {
+      const results = fn.apply(null, args);
+      return storeAPI.paginate(results, pageSize);
+    };
+  };
+
   /**
    * Create the Store instance with desired API
    */

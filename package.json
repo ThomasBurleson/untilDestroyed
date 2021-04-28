@@ -1,6 +1,6 @@
 {
   "name": "mindspace-io",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "license": "MIT",
   "scripts": {
     "nx": "nx",
