@@ -1,6 +1,6 @@
 export const PAGE_SIZE = 20;
 
-export interface PaginatorData<T> {
+export interface PaginatorData {
   paginatedList: any[];
   currentPage: number;
   pageSize: number;
@@ -8,8 +8,9 @@ export interface PaginatorData<T> {
   totalCount: number;
 }
 
-export interface Paginator extends PaginatorData<any> {
+export interface Paginator extends PaginatorData {
   goToPage: (page: number) => any[];
+  setPageSize: (numRowsPerPage: number) => void;
 }
 
 /**
@@ -129,6 +130,13 @@ export class DataPaginator implements Paginator {
       }
     }
     return this._paginatedList as any[];
+  }
+
+  /**
+   * Needed for the 'Paginator' API
+   */
+  setPageSize(numRowsPerPage: number) {
+    this.pageSize = numRowsPerPage || PAGE_SIZE;
   }
 
   /**
