@@ -84,7 +84,7 @@ export function createStore<TState extends State>(
     onDestroy: NOOP, // call to store is destroyed and cleanup from onReady() activity
   };
 
-  let paginator = new DataPaginator<unknown>();
+  let paginator = new DataPaginator();
   const computed: Record<string, (() => Unsubscribe) | (() => void)> = {};
 
   const name = options.storeName || `ReactAkitStore${Math.random()}`;
@@ -273,8 +273,8 @@ export function createStore<TState extends State>(
    * The target 'rawlist' is unaffected and passed thru...Meanwhile,
    * the paginated list internally manages a clone of original target 'rawlist'
    */
-  const paginate = <T extends unknown>(rawList: T[], pageSize = 20): T[] => {
-    paginator = new DataPaginator<T>(rawList, pageSize);
+  const paginate = (rawList: any[], pageSize = 20): any[] => {
+    paginator = new DataPaginator(rawList, pageSize);
 
     const { totalCount, totalPages, currentPage, paginatedList } = paginator;
     const goToPage = (page: number) => {
@@ -314,7 +314,14 @@ export function createStore<TState extends State>(
   paginate.on = (fn: SourceFactoryFn, pageSize = 20): SourceFactoryFn => {
     return (...args: any[]) => {
       const results = fn.apply(null, args);
-      return storeAPI.paginate(results, pageSize);
+
+      // Start a side affect to update pagination OUTSIDE computed property
+      // transforms.
+      new Promise((resolve) => {
+        paginate(results, pageSize);
+      });
+
+      return results;
     };
   };
 
@@ -403,7 +410,9 @@ export function createStore<TState extends State>(
   const initializeStore = () => {
     initializer.state = produce({}, () => ({
       ...{ error: null, isLoading: false }, // start with default error/loading state
-      ...{ paginatedList: [], currentPage: 1, totalPages: 1, pageSize: 20 },
+      ...{ pagination: { paginatedList: [], totalCount: 0, totalPages: 1, currentPage: 1, pageSize: 20 } },
+
+      // Callback to create the custom store
       ...createState(
         { ...storeAPI, ...hookAPI }, // provide to custom store internal functions
         initializer.registerOnInit // enable custom store to register for useStoreEffect notifications

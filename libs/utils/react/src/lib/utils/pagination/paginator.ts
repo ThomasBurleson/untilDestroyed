@@ -1,15 +1,15 @@
 export const PAGE_SIZE = 20;
 
 export interface PaginatorData<T> {
-  paginatedList: T[];
+  paginatedList: any[];
   currentPage: number;
   pageSize: number;
   totalPages: number;
   totalCount: number;
 }
 
-export interface Paginator<T> extends PaginatorData<T> {
-  goToPage: (page: number) => T[];
+export interface Paginator extends PaginatorData<any> {
+  goToPage: (page: number) => any[];
 }
 
 /**
@@ -40,8 +40,8 @@ export interface Paginator<T> extends PaginatorData<T> {
  *  };
  */
 
-export class DataPaginator<T> implements Paginator<T> {
-  private _paginatedList: T[] | null;
+export class DataPaginator implements Paginator {
+  private _paginatedList: any[] | null;
   private _totalPages = 0;
 
   get totalCount(): number {
@@ -61,18 +61,18 @@ export class DataPaginator<T> implements Paginator<T> {
     return this._currentPage + 1;
   }
 
-  get paginatedList(): T[] {
+  get paginatedList(): any[] {
     return this._paginatedList ? [...this._paginatedList] : [];
   }
 
   /**
    * Always return immutable list
    */
-  get rawList(): T[] {
+  get rawList(): any[] {
     return [...this._rawList];
   }
 
-  set rawList(list: T[]) {
+  set rawList(list: any[]) {
     this._rawList = [...(list || [])];
     this._paginatedList = [];
     this._currentPage = -1;
@@ -97,7 +97,7 @@ export class DataPaginator<T> implements Paginator<T> {
   /**
    * Construct with rawList and options
    */
-  constructor(private _rawList: T[] = [], private _pageSize: number = PAGE_SIZE, private _currentPage: number = 1) {
+  constructor(private _rawList: any[] = [], private _pageSize: number = PAGE_SIZE, private _currentPage: number = 1) {
     this._pageSize = Math.max(1, Math.round(this._pageSize));
     this.goToPage(_currentPage);
   }
@@ -106,7 +106,7 @@ export class DataPaginator<T> implements Paginator<T> {
    * External users use 1-based values,
    * internal usages maintain 0-based values
    */
-  goToPage(page: number): T[] {
+  goToPage(page: number): any[] {
     this.updateTotalPages();
 
     page = Math.min(Math.max(1, page), this._totalPages);
@@ -128,7 +128,7 @@ export class DataPaginator<T> implements Paginator<T> {
         }
       }
     }
-    return this._paginatedList as T[];
+    return this._paginatedList as any[];
   }
 
   /**

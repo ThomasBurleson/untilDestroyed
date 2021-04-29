@@ -351,6 +351,8 @@ describe('UseStore state management', () => {
       await waitForNextUpdate();
 
       const store1 = result.current;
+
+      expect(store1.allKeys.length).toBe(200);
       expect(store1.evenKeys.length).toBe(100);
       expect(store1.pagination.paginatedList.length).toBe(40);
       expect(store1.pagination.totalPages).toBe(3);
