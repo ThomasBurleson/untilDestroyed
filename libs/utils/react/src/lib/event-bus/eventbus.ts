@@ -1,27 +1,12 @@
 import { Subject, Observable, of } from 'rxjs';
 import { filter, map, startWith, tap, takeUntil } from 'rxjs/operators';
 
-export enum CollectionEvent {
-  ITEM_ADDED = 'itemAdded',
-  ITEM_UPDATED = 'itemUpdated',
-  ITEM_REMOVED = 'itemRemoved',
-  ITEM_ERROR = 'eventError',
-}
-
 export interface EmitEvent<K extends unknown> {
   type: string;
   data?: K;
 }
 
 export type EventRegistratons = Record<string, (data: any) => void>;
-
-export class ItemEvent<K> implements EmitEvent<K> {
-  constructor(public type: string, public data: K) {}
-}
-
-export const itemUpdated = (item: any) => new ItemEvent(CollectionEvent.ITEM_UPDATED, item);
-export const itemRemoved = (itemId: string) => new ItemEvent(CollectionEvent.ITEM_REMOVED, itemId);
-export const itemError = (error: any) => new ItemEvent(CollectionEvent.ITEM_ERROR, error);
 
 const DestroyEvent = '[EventBus] destory';
 export const destroyEventBus = () => ({ type: DestroyEvent });

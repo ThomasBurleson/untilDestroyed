@@ -1,27 +1,15 @@
-import { Context, useContext } from 'react';
-
-import { Token, InjectorContext, DependencyInjector } from '../di';
-
-/**
- * Return either the injector instance or the token lookup FROM the
- * injector.
- *
- * @returns T is either the DependencyInjector or the injector token lookup.
- */
-export const useDependencyInjector = <T extends unknown>(token?: Token, context?: Context<DependencyInjector>): T => {
-  const injector = useContext(context || InjectorContext);
-
-  return (token ? injector.get(token) : injector) as T;
-};
+import { Token, DependencyInjector } from '../di';
 
 export type HookTuple<V, I extends DependencyInjector> = [V, I]; // Array of value + injector
 
 /**
+ * !! This is useful when a DependencyInjectionProvider is NOT available
+ *
  * `useInjectorHook()` allows applications to build custom hooks that internally use
  * dependency injection to access singleton services, values, etc.
  *
  * A configured injector instance is required along with and a lookup token.
- * What is returned is a tuple of the singleton instance and the injector.
+ * What is returned is a tuple containing the singleton instance and the injector.
  *
  * @code
  *   const injector: DependencyInjector = makeInjector([

@@ -1,3 +1,5 @@
+import { immerable } from 'immer';
+
 export const PAGE_SIZE = 20;
 
 export interface PaginatorData {
@@ -42,6 +44,8 @@ export interface Paginator extends PaginatorData {
  */
 
 export class DataPaginator implements Paginator {
+  [immerable] = true;
+
   private _paginatedList: any[] | null;
   private _totalPages = 0;
 
@@ -74,11 +78,13 @@ export class DataPaginator implements Paginator {
   }
 
   set rawList(list: any[]) {
-    this._rawList = [...(list || [])];
-    this._paginatedList = [];
-    this._currentPage = -1;
+    if (list !== this._rawList) {
+      this._rawList = [...(list || [])];
+      this._paginatedList = [];
+      this._currentPage = -1;
 
-    this.goToPage(1);
+      this.goToPage(1);
+    }
   }
 
   get pageSize(): number {
