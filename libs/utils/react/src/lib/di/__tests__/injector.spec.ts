@@ -1,6 +1,6 @@
-import { makeInjector } from './injector';
-import { InjectionToken } from './injector.token';
-import { DependencyInjector, UndoChanges } from './injector.interfaces';
+import { makeInjector } from '../injector';
+import { InjectionToken } from '../injector.token';
+import { DependencyInjector, UndoChanges } from '../injector.interfaces';
 
 const HookToken = new InjectionToken("[Hook] Test function requests");   
 

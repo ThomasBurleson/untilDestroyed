@@ -1,7 +1,7 @@
-import { spyOn } from '../rxjs/testing';
+import { spyOn } from '../../rxjs/testing';
 
-import { Paginator } from './data-paginator';
-import { RxPaginator } from './rx-paginator';
+import { Paginator } from '../data-paginator';
+import { RxPaginator } from '../rx-paginator';
 
 const PAGE_SIZE = 3;
 describe('Rx-Paginator', () => {

@@ -1,5 +1,7 @@
 import React from 'react';
-import { DependencyInjector, InjectorContext } from '../di';
+
+import { DependencyInjector } from '../injector.interfaces';
+import { InjectorContext } from '../injector.context';
 
 /**s
  * Allows the injector instance to be 'passed' to the DIProvider HOC

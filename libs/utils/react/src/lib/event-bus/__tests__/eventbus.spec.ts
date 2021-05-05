@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { EventBus } from './eventbus';
+import { EventBus } from '../eventbus';
 
 enum SESSION {
   STARTED = 'sessionStarted',

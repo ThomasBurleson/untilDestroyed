@@ -1,4 +1,4 @@
-import { Paginator } from '../utils';
+import { Paginator } from '../pagination';
 
 /**
  * State types (inspired/copied from Zustand)

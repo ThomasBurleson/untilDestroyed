@@ -1,5 +1,8 @@
-import { InjectionToken, DependencyInjector, makeInjector, UndoChanges } from '../di';
-import { useInjectorHook, HookTuple } from './injector.hook';
+import { makeInjector } from '../injector';
+import { InjectionToken } from '../injector.token';
+import { DependencyInjector, UndoChanges } from '../injector.interfaces';
+
+import { useInjectorHook, HookTuple } from '../hooks/injector.hook';
 
 describe('useInjector', () => {
   let injector: DependencyInjector;

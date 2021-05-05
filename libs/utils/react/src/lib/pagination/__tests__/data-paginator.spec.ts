@@ -1,4 +1,4 @@
-import { DataPaginator } from './data-paginator';
+import { DataPaginator } from '../data-paginator';
 
 describe('Paginator', function () {
   describe('should initialize', function () {

@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { useEffect, useState, useContext, useCallback, Context } from 'react';
 
-import { Unsubscribe } from '../store';
+import { Unsubscribe } from '../reactive-store';
 import { InjectorContext, DependencyInjector } from '../di';
 import { EmitEvent, EventBus } from './eventbus';
 

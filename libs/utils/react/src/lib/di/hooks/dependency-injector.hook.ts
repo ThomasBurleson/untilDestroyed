@@ -1,5 +1,6 @@
 import { useContext } from 'react';
-import { Token, InjectorContext } from '../di';
+import { Token } from '../injector.interfaces';
+import { InjectorContext } from '../injector.context';
 
 /**
  * Return either the injector instance or the token lookup FROM the

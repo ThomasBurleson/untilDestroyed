@@ -12,8 +12,8 @@ import {
   combineQueries,
 } from '@datorama/akita';
 
-import { useObservable } from '../hooks';
-import { DataPaginator } from '../utils';
+import { useObservable } from '../rxjs';
+import { DataPaginator, Paginator } from '../pagination';
 
 import {
   Destroy,
@@ -43,7 +43,6 @@ import {
 } from './reactive-store.interfaces';
 
 import { isDev } from '../env';
-import { Paginator } from '../utils';
 
 // For server-side rendering: https://github.com/react-spring/zustand/pull/34
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;

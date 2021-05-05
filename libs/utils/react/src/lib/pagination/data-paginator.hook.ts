@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DataPaginator, Paginator } from './data-paginator';
 
-export const useStorePaginator = <T extends any>(rawList: Array<T>) => {
-  const [paginator] = useState(() => new DataPaginator(rawList, 10));
+export const useStorePaginator = <T extends any>(rawList: Array<T>, pageSize = 10) => {
+  const [paginator] = useState(() => new DataPaginator(rawList, pageSize));
   const setPageSize = useCallback(
     (numRows: number) => {
       paginator.pageSize = numRows;

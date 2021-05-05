@@ -1,4 +1,4 @@
-import { Token, DependencyInjector } from '../di';
+import { Token, DependencyInjector } from '../injector.interfaces';
 
 export type HookTuple<V, I extends DependencyInjector> = [V, I]; // Array of value + injector
 
