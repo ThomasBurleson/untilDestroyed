@@ -1,4 +1,4 @@
-import { State, StateSelector } from '@mindspace-io/react';
+import { State, StateSelector, StateSelectorList } from '@mindspace-io/react';
 
 export interface QAState extends State {
   // Data
@@ -16,8 +16,8 @@ export interface QAState extends State {
 
 export type QAViewModel = [string, string, (question: string) => void];
 
-export const selectViewModel: StateSelector<QAState, QAViewModel> = (s: QAState) => [
-  s.question,
-  s.answer,
-  s.updateQuestion,
+export const selectViewModel: StateSelectorList<QAState, any> = [
+  (s: QAState) => s.question,
+  (s: QAState) => s.answer,
+  (s: QAState) => s.updateQuestion,
 ];

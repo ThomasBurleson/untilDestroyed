@@ -1,6 +1,6 @@
 import { produce } from 'immer';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, debounceTime } from 'rxjs/operators';
+import { combineLatest, BehaviorSubject, Observable } from 'rxjs';
+import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { useState, useEffect, useLayoutEffect } from 'react';
 import {
@@ -9,11 +9,10 @@ import {
   StoreConfigOptions,
   UpdateStateCallback,
   applyTransaction as batchAction,
-  combineQueries,
 } from '@datorama/akita';
 
 import { useObservable } from '../rxjs';
-import { DataPaginator, Paginator } from '../pagination';
+import { RxPaginator, Paginator } from '../pagination';
 
 import {
   Destroy,
@@ -83,7 +82,7 @@ export function createStore<TState extends State>(
     onDestroy: NOOP, // call to store is destroyed and cleanup from onReady() activity
   };
 
-  let paginator = new DataPaginator();
+  let paginator = new RxPaginator();
   const computed: Record<string, (() => Unsubscribe) | (() => void)> = {};
 
   const name = options.storeName || `ReactAkitStore${Math.random()}`;
@@ -111,7 +110,7 @@ export function createStore<TState extends State>(
    * Build API methods used that delegate to the store and query
    */
   const getState: GetState<TState> = store.getValue.bind(store);
-  const setState: SetState<TState> = (partial, replace) => {
+  const setState: SetState<TState> = (partial, replace = false) => {
     const isCallback = partial instanceof Function;
     const updateWithValue: UpdateStateCallback<TState> = (s) => (replace ? s : { ...s, ...partial });
     store.update(!isCallback ? updateWithValue : (partial as UpdateStateCallback<TState>));
@@ -171,19 +170,22 @@ export function createStore<TState extends State>(
           const makeQuery = (predicate) => query.select(predicate);
           const selectors = normalizeSelector(it.selectors);
           const emitters: Observable<any>[] = selectors.map(makeQuery);
-          const source$ = emitters.length > 1 ? combineQueries([...emitters, recompute.asObservable()]) : emitters[0];
-          const subscription = source$.pipe(map(it.transform), debounceTime(1)).subscribe((computedValue: unknown) => {
-            setState((s) => ({ ...s, [it.name]: computedValue }));
-          });
 
-          if (!!it.initialValue) {
-            const initialValue =
-              typeof it.initialValue === 'function' ? (it.initialValue as Function)() : it.initialValue;
-            setState((s) => ({ ...s, [it.name]: initialValue }));
+          const sources$ = emitters.length > 1 ? combineLatest([...emitters, recompute.asObservable()]) : emitters[0];
+          const computed$ = sources$.pipe(map(it.transform), debounceTime(2));
+          const onComputedChanged = (computedValue: unknown) => {
+            setState((s) => ({ ...s, [it.name]: computedValue }));
+          };
+
+          if (it.hasOwnProperty('initialValue')) {
+            const value = valueFrom(it.initialValue);
+            setState((s) => ({ ...s, [it.name]: value }));
           }
+
+          const subscription = computed$.subscribe(onComputedChanged);
           return () => subscription.unsubscribe();
         }
-        throw new Error('[createStore::addComputedProperty()] Invalid Store Selectors');
+        throw new Error(`[createStore::addComputedProperty( '${it.name}' )] Invalid Store Selectors`);
       };
 
       computed[it.name] = !initializer.completed ? deferredSetup : deferredSetup();
@@ -207,9 +209,11 @@ export function createStore<TState extends State>(
     const deferredSetup = () => {
       if (validateWatchedProperty(store, property)) {
         const selector = (s: TState) => s[property];
-        const source$ = query.select(selector).pipe(debounceTime(1));
-        const watcher = source$.subscribe(listener);
+        const source$ = query.select(selector).pipe(debounceTime(3), distinctUntilChanged());
 
+        listener(selector(store) as StateSlice); // Notify listener immediately
+
+        const watcher = source$.subscribe(listener);
         return () => watcher.unsubscribe();
       }
     };
@@ -266,6 +270,9 @@ export function createStore<TState extends State>(
     }
   };
 
+  // unsubscribe from paginator.pagination$ stream
+  let unsubscribe = NOOP;
+
   /**
    * Optional Paginator API available within the createStore factory
    *
@@ -273,33 +280,22 @@ export function createStore<TState extends State>(
    * the paginated list internally manages a clone of original target 'rawlist'
    */
   const paginate = (rawList: any[], pageSize = 20): any[] => {
-    paginator = new DataPaginator(rawList, pageSize);
-
-    const updatePaginationState = () => {
-      const { totalCount, totalPages, currentPage, paginatedList } = paginator;
-      setState((s) => {
-        s.pagination = {
-          totalCount,
-          totalPages,
-          currentPage,
-          paginatedList,
-          pageSize,
-          goToPage,
-          setPageSize,
-        };
+    const watchPaginator = () => {
+      const stream$ = paginator.pagination$;
+      const subscription = stream$.subscribe((pagination: Paginator) => {
+        setState((s) => {
+          s.pagination = pagination;
+        });
       });
-    };
-    const goToPage = (page: number) => {
-      const results = paginator.goToPage(page);
-      updatePaginationState();
-      return results;
-    };
-    const setPageSize = (numRows: number) => {
-      paginator.pageSize = numRows;
-      updatePaginationState();
+
+      unsubscribe = subscription.unsubscribe.bind(subscription);
     };
 
-    updatePaginationState();
+    paginator = new RxPaginator(rawList, pageSize);
+
+    unsubscribe();
+    watchPaginator();
+
     return rawList;
   };
 
@@ -314,7 +310,7 @@ export function createStore<TState extends State>(
    *    });
    *
    */
-  paginate.on = (fn: SourceFactoryFn, pageSize = 20): SourceFactoryFn => {
+  paginate.on = <T>(fn: SourceFactoryFn<T>, pageSize = 20): SourceFactoryFn<T> => {
     return (...args: any[]) => {
       const results = fn.apply(null, args);
 
@@ -355,11 +351,15 @@ export function createStore<TState extends State>(
    * toStateSlice(): Gather current state values for the specified selector(s)
    */
   const toObservable = <StateSlice>(
-    selector: StateSelector<TState, StateSlice> | StateSelectorList<TState, StateSlice> = identity
+    selector?: StateSelector<TState, StateSlice> | StateSelectorList<TState, StateSlice>
   ) => {
-    const list = selector instanceof Array ? <StateSelectorList<TState, StateSlice>>selector : [selector];
-    return list.length == 1 ? query.select(list[0]) : combineQueries(list.map((it) => query.select(it)));
+    const list = normalizeSelector(selector);
+    const buildQueries = () => list.map((it) => query.select(it));
+    const buildStream = () => (list.length ? combineLatest(buildQueries()) : query.select(identity));
+
+    return buildStream().pipe(debounceTime(10));
   };
+
   const getSliceValueFor = <StateSlice>(
     selector: StateSelector<TState, StateSlice> | StateSelectorList<TState, StateSlice> = identity
   ): any | any[] => {
@@ -374,7 +374,7 @@ export function createStore<TState extends State>(
    *
    * After the store has been created and initialized with api + state, this hoook
    * is created. Developer will use this custom react hook to 'select' state data.
-   * The selected data sourcds will re-emit data after changes.
+   * The selected data sources will re-emit data after changes.
    *
    * This hook is implicitly connected to its associated [parent] store
    *
@@ -463,7 +463,8 @@ function normalizeSelector<T extends State, K>(
   selectors: StateSelectorList<T, K> | StateSelector<T, K>
 ): StateSelectorList<T, K> {
   const isArray = selectors instanceof Array;
-  return isArray ? (selectors as StateSelectorList<T, K>) : [selectors as StateSelector<T, K>];
+
+  return isArray ? (selectors as StateSelectorList<T, K>) : !!selectors ? [selectors as StateSelector<T, K>] : [];
 }
 
 /**
@@ -521,4 +522,12 @@ function validateSelectors<T extends State, K extends any, U>(
   const selectors = normalizeSelector(current);
   const test = (selector: StateSelector<T, K>) => selector(store) != store;
   return selectors.reduce((valid, sel) => valid && test(sel), true);
+}
+
+/**
+ * Convert input source to output value
+ * Input source may be a factory OR the value itself.
+ */
+function valueFrom(source: unknown) {
+  return typeof source === 'function' ? (source as Function)() : source;
 }

@@ -22,6 +22,7 @@ export const useStore = createStore<QAState>(({ set, watchProperty }) => {
     answer: '',
     updateQuestion(answer: string) {
       set((s: QAState) => {
+        console.log(`question = '${answer}'`);
         s.question = answer;
       });
     },
@@ -36,7 +37,6 @@ export const useStore = createStore<QAState>(({ set, watchProperty }) => {
       try {
         const newAnswer = await callWtfApi();
         updateAnswer(newAnswer);
-
         return;
       } catch (error) {
         updateAnswer(`${WTF.error}: ${error}`);

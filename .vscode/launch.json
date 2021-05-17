@@ -7,13 +7,13 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Jest Current File (using nx)",
-      "program": "${workspaceFolder}/node_modules/@nrwl/cli/bin/nx.js",
-      "cwd": "${workspaceFolder}",
+      "name": "Nx Jest",
+      "program": "/Users/thomasburleson/Documents/projects/Mindspace/projects/mindspace-io/node_modules/@nrwl/cli/bin/nx.js",
+      "cwd": "/Users/thomasburleson/Documents/projects/Mindspace/projects/mindspace-io",
       "args": [
-        // "--inspect-brk",
-        "test",
+        "test",        
         "utils-react",
+        "--testPathPattern=libs/utils/react/src/lib/reactive-store/reactive-store",
         "--inspect-brk",
         "--runInBand"
       ],

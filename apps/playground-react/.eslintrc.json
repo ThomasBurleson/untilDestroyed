@@ -5,7 +5,7 @@
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "parserOptions": {
-        "project": ["apps/test-react-akita/tsconfig.*?.json"]
+        "project": ["apps/playground-react/tsconfig.*?.json"]
       },
       "rules": {}
     },

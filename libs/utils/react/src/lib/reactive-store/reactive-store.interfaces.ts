@@ -20,10 +20,10 @@ export interface StatusAPI {
   setIsLoading: SetLoading;
 }
 
-export type SourceFactoryFn = (...args: any[]) => any;
-export interface SetPaginationSource {
-  (list: any[], pageSize?: number): any[];
-  on(target: SourceFactoryFn, pageSize?: number): SourceFactoryFn;
+export type SourceFactoryFn<T> = (...args: any[]) => T[];
+export interface SetPaginationSource<T> {
+  (list: T[], pageSize?: number): T[];
+  on(target: SourceFactoryFn<T>, pageSize?: number): SourceFactoryFn<T>;
 }
 
 export type PartialState<T extends State, K extends keyof T = keyof T> =
@@ -91,7 +91,7 @@ export interface StoreAPI<T extends State> {
   applyTransaction: ApplyTransaction<T>;
   addComputedProperty: AddComputedProperty<T>;
   watchProperty: WatchProperty<T>;
-  paginate: SetPaginationSource;
+  paginate: SetPaginationSource<unknown>;
   setIsLoading: SetLoading;
   setError: SetError;
 }

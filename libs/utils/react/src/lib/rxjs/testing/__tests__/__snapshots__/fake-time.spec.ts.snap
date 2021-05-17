@@ -2,7 +2,7 @@
 
 exports[`fakeTime should fail with no parameters 1`] = `
 "
-    \\"fakeTime()\\" callback must be declared with at least one parameter
-    For example: fakeAsync((flush)=> ...)
-    "
+  \\"fakeTime()\\" callback must be declared with at least one parameter
+  For example: fakeAsync((flush)=> ...)
+  "
 `;

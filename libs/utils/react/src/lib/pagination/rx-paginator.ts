@@ -60,7 +60,7 @@ export class RxPaginator {
     this.emitter.next(api);
   }
 
-  private toSnapshot(): Paginator {
+  public toSnapshot(): Paginator {
     const { totalCount, totalPages, currentPage, paginatedList, pageSize } = this.paginator;
 
     return {

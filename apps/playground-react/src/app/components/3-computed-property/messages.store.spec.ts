@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react-hooks/dom';
 import { UseStore } from '@mindspace-io/react';
 
 import { MessagesState } from './messages.interfaces';

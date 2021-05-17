@@ -6,7 +6,7 @@ import { selectViewModel, useStore } from './question-answer.store';
  * Show list of messages that container the searchCriteria
  */
 export const QuestionAnswer: React.FC = () => {
-  const [question, answer, updateQuestion] = useStore(selectViewModel);
+  const { question, answer, updateQuestion } = useStore(); //selectViewModel);
 
   return (
     <div className="sampleBox">

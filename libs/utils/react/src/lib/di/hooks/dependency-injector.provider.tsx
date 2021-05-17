@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { DependencyInjector } from '../injector.interfaces';
 import { InjectorContext } from '../injector.context';
@@ -22,6 +22,6 @@ export interface DIProviderProps {
  * - Easy lookups for the Business Layers
  *
  */
-export const DependencyInjectionProvider: React.FC<DIProviderProps> = ({ injector, children }) => {
+export const DependencyInjectionProvider: FC<DIProviderProps> = ({ injector, children }) => {
   return <InjectorContext.Provider value={injector}>{children}</InjectorContext.Provider>;
 };

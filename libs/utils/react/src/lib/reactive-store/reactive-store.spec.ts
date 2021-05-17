@@ -1,9 +1,11 @@
-import { InjectionToken } from './../di/injector.token';
-import { renderHook, act } from '@testing-library/react-hooks';
-import { makeInjector } from '../di';
+import { renderHook, act } from '@testing-library/react-hooks/dom';
+
+import { fakeTimeWithAct } from '../rxjs/testing';
+import { InjectionToken } from '../di/injector.token';
 
 import { createStore } from './reactive-store';
-import { StateSelector, UseStore, State, GetState } from './reactive-store.interfaces';
+import { StateSelector, UseStore, State, GetState, StateSelectorList } from './reactive-store.interfaces';
+import { makeInjector } from '../di/injector';
 
 // ************************************
 // Define custom types for testing only
@@ -107,69 +109,6 @@ describe('UseStore state management', () => {
       store.saveEmails(['ThomasBurleson@gmail.com']);
       expect(emails.length).toBe(0);
     });
-
-    it('should reset store from the hook', () => {
-      const hook = createStore<EmailState>(({ set }) => ({
-        emails: [],
-        saveEmails: (emails) => set({ emails }),
-      }));
-      const { result, waitForNextUpdate } = renderHook<UseStore<EmailState>, EmailState>(hook);
-
-      act(() => {
-        result.current.saveEmails(['ThomasBurleson@gmail.com']);
-      });
-      expect(result.current.emails.length).toBe(1);
-
-      act(() => {
-        // Explicitly for the associated store to reset state
-        hook.reset();
-      });
-      expect(result.current.emails.length).toBe(0);
-    });
-
-    it('should not reset normal store when unmounted', () => {
-      const hook = createStore<EmailState>(({ set }) => ({
-        emails: [],
-        saveEmails: (emails) => set({ emails }),
-      }));
-      const { result, unmount, rerender } = renderHook<UseStore<EmailState>, EmailState>(hook);
-
-      expect(result.current.emails.length).toBe(0);
-      act(() => {
-        result.current.saveEmails(['ThomasBurleson@gmail.com']);
-      });
-      expect(result.current.emails.length).toBe(1);
-
-      unmount();
-      rerender();
-
-      // Without StateCreatorOptions 'autoReset: true', store is cached and shared
-      // regardless of components unmounting
-      expect(result.current.emails.length).toBe(1);
-    });
-
-    it('should reset store from resettable store when unmounted', () => {
-      const hook = createStore<EmailState>(
-        ({ set }) => ({
-          emails: [],
-          saveEmails: (emails) => set({ emails }),
-        }),
-        { autoReset: true } // when component unmounts, autoreset store
-      );
-      const { result, unmount, rerender } = renderHook<UseStore<EmailState>, EmailState>(hook);
-
-      expect(result.current.emails.length).toBe(0);
-      act(() => {
-        result.current.saveEmails(['ThomasBurleson@gmail.com']);
-      });
-      expect(result.current.emails.length).toBe(1);
-
-      unmount();
-      rerender();
-
-      // Only because we set the StateCreatorOptions 'autoReset'
-      expect(result.current.emails.length).toBe(0);
-    });
   });
 
   describe('createStore() with onInit notifications', () => {
@@ -228,6 +167,73 @@ describe('UseStore state management', () => {
     });
   });
 
+  describe('createStore() Hooks', () => {
+    it(
+      'should reset store from the hook',
+      fakeTimeWithAct((act, done) => {
+        const hook = createStore<EmailState>(({ set }) => ({
+          emails: [],
+          saveEmails: (emails) => set({ emails }),
+        }));
+        const { result } = renderHook<UseStore<EmailState>, EmailState>(hook);
+
+        act(() => result.current.saveEmails(['ThomasBurleson@gmail.com']));
+        expect(result.current.emails.length).toBe(1);
+
+        act(() => hook.reset());
+        expect(result.current.emails.length).toBe(0);
+
+        done();
+      })
+    );
+
+    it(
+      'should not reset normal store when unmounted',
+      fakeTimeWithAct((act) => {
+        const hook = createStore<EmailState>(({ set }) => ({
+          emails: [],
+          saveEmails: (emails) => set({ emails }),
+        }));
+        const { result, unmount, rerender } = renderHook<UseStore<EmailState>, EmailState>(hook);
+        expect(result.current.emails.length).toBe(0);
+
+        act(() => result.current.saveEmails(['ThomasBurleson@gmail.com']));
+        expect(result.current.emails.length).toBe(1);
+
+        unmount();
+        rerender();
+
+        // Without StateCreatorOptions 'autoReset: true', store is cached and shared
+        // regardless of components unmounting
+        expect(result.current.emails.length).toBe(1);
+      })
+    );
+
+    it(
+      'should reset store from resettable store when unmounted',
+      fakeTimeWithAct((act) => {
+        const hook = createStore<EmailState>(
+          ({ set }) => ({
+            emails: [],
+            saveEmails: (emails) => set({ emails }),
+          }),
+          { autoReset: true } // when component unmounts, autoreset store
+        );
+        const { result, unmount, rerender } = renderHook<UseStore<EmailState>, EmailState>(hook);
+        expect(result.current.emails.length).toBe(0);
+
+        act(() => result.current.saveEmails(['ThomasBurleson@gmail.com']));
+        expect(result.current.emails.length).toBe(1);
+
+        unmount();
+        rerender();
+
+        // Only because we set the StateCreatorOptions 'autoReset'
+        expect(result.current.emails.length).toBe(0);
+      })
+    );
+  });
+
   describe('createStore() with pagination', () => {
     let useStore: UseStore<EmailState>;
 
@@ -239,7 +245,6 @@ describe('UseStore state management', () => {
       useStore = createStore<EmailState>(({ get, paginate }, onInit) => {
         const rawList = [...new Array(90).keys()].map((v) => String(v + 1));
         const store = { emails: rawList };
-
         onInit(() => {
           paginate(rawList, 20);
 
@@ -388,7 +393,9 @@ describe('UseStore state management', () => {
     beforeEach(() => {
       useStore = createStore(({ set }) => ({
         emails: ['ThomasBurleson@gmail.com'],
-        saveEmails: (emails) => set({ emails }),
+        saveEmails: (emails) => {
+          set({ emails });
+        },
       }));
     });
 
@@ -396,121 +403,139 @@ describe('UseStore state management', () => {
       useStore.destroy();
     });
 
-    it('should return entire state; when a selector is not specified', () => {
-      const { result } = renderHook<UseStore<EmailState>, EmailState>(useStore);
+    it(
+      'should return entire state; when a selector is not specified',
+      fakeTimeWithAct((act) => {
+        const { result } = renderHook<UseStore<EmailState>, EmailState>(useStore);
 
-      expect(result.current.emails.length).toBe(1);
-      expect(result.current.emails[0]).toBe('ThomasBurleson@gmail.com');
-      expect(result.current.saveEmails).toBeDefined();
+        expect(result.current.emails.length).toBe(1);
+        expect(result.current.emails[0]).toBe('ThomasBurleson@gmail.com');
+        expect(result.current.saveEmails).toBeDefined();
 
-      expect(result.current.error).toBeDefined();
-      expect(result.current.isLoading).toBeDefined();
-      expect(result.current.isLoading).toBe(false);
+        expect(result.current.error).toBeDefined();
+        expect(result.current.isLoading).toBeDefined();
+        expect(result.current.isLoading).toBe(false);
 
-      act(() => {
-        result.current.saveEmails(['Harry@hotpixelgroup.com', 'Thomas.Burleson@ampf.com']);
-      });
+        act(() => result.current.saveEmails(['Harry@hotpixelgroup.com', 'Thomas.Burleson@ampf.com']));
 
-      expect(result.current.emails.length).toBe(2);
-      expect(result.current.isLoading).toBe(false);
-    });
+        expect(result.current.emails.length).toBe(2);
+        expect(result.current.isLoading).toBe(false);
+      })
+    );
 
-    it('should return a simply `slice` only when a simply selector is specified', () => {
-      const { result: emails } = renderHook<StateSelector<EmailState, EmailList>, EmailList>(useStore, {
-        initialProps: (s) => s.emails,
-      });
-
-      expect(emails.current instanceof Array).toBe(true);
-      expect(emails.current.length).toBe(1);
-    });
-
-    it('should return a complex `slice` only when a combined selector is specified', () => {
-      const { result } = renderHook<StateSelector<EmailState, EmailAndSaveFn>, EmailAndSaveFn>(useStore, {
-        initialProps: (s) => [s.emails, s.saveEmails, s.isLoading],
-      });
-
-      const [emails, saveEmails, isLoading] = result.current;
-      expect(emails).toBeDefined();
-      expect(saveEmails).toBeInstanceOf(Function);
-      expect(isLoading).toBe(false);
-
-      expect(emails.length).toBe(1);
-
-      act(() => {
-        saveEmails(['Harry@hotpixelgroup.com', 'Thomas.Burleson@ampf.com']);
-      });
-
-      expect(result.current[0].length).toBe(2);
-    });
-
-    it('should update state with value', () => {
-      const { result } = renderHook<UseStore<EmailState>, EmailState>(useStore);
-
-      expect(result.current.emails.length).toBe(1);
-
-      act(() => {
-        result.current.saveEmails(['Harry@hotpixelgroup.com', 'Thomas.Burleson@ampf.com']);
-      });
-
-      expect(result.current.emails.length).toBe(2);
-      expect(result.current.emails[0]).toBe('Harry@hotpixelgroup.com');
-    });
-
-    it('update state with partial selector; confirm with getState()', () => {
-      let store: MessageState;
-      let getState: GetState<MessageState>;
-      const hook = createStore<MessageState>(({set,get}) => {
-        getState = get;
-        return store = ({  
-          numViews: 0,
-          messages: [],         
-          saveMessages: (v) => v ,          
-          incrementCount: () => set((s: MessageState) => ({ numViews: s.numViews + 1 }))
+    it(
+      'should return a simply `slice` only when a simply selector is specified',
+      fakeTimeWithAct((act, done) => {
+        const { result: emails } = renderHook<StateSelector<EmailState, EmailList>, EmailList>(useStore, {
+          initialProps: (s) => s.emails,
         });
-      }); // prettier-ignore
 
-      expect(store.numViews).toBe(0);
+        act(() => {}); // allow store to update and render
 
-      act(() => {
-        store.incrementCount();
-      });
+        expect(emails.current instanceof Array).toBe(true);
+        expect(emails.current.length).toBe(1);
 
-      const updated = getState();
-      expect(updated.numViews).toBe(1);
-    });
+        done();
+      })
+    );
 
-    it('update state with partial selector that returns new state', () => {
-      const useStore = createStore<MessageState>(({ set }) => ({
-        numViews: 0,
-        incrementCount: () => set((s: MessageState) => ({ numViews: s.numViews + 1 })),
-      }));
-      const { result } = renderHook(useStore, { initialProps: (s) => [s.numViews, s.incrementCount] });
+    it(
+      'should return a complex `slice` only when a combined selector is specified',
+      fakeTimeWithAct((act) => {
+        const { result } = renderHook<StateSelectorList<EmailState, any>, EmailAndSaveFn>(useStore, {
+          initialProps: [(s) => s.emails, (s) => s.saveEmails, (s) => s.isLoading],
+        });
+        const [emails, saveEmails, isLoading] = result.current;
 
-      expect(result.current[0]).toBe(0);
-      act(() => {
-        const incrementCount = result.current[1];
-        incrementCount();
-      });
-      expect(result.current[0]).toBe(1);
-    });
+        expect(emails).toBeDefined();
+        expect(saveEmails).toBeInstanceOf(Function);
+        expect(isLoading).toBe(false);
+        expect(emails.length).toBe(1);
 
-    it('update state with partial selector that modifies the draft', () => {
-      const useStore = createStore<MessageState>(({ set }) => ({
-        numViews: 0,
-        incrementCount: () =>
-          set((draft: MessageState) => {
-            draft.numViews += 1; // just modify the draft... Immer manages the immutability
-          }),
-      }));
-      const { result } = renderHook(useStore, { initialProps: (s) => [s.numViews, s.incrementCount] });
+        act(() => saveEmails(['Harry@hotpixelgroup.com', 'Thomas.Burleson@ampf.com']));
 
-      expect(result.current[0]).toBe(0);
-      act(() => {
-        const incrementCount = result.current[1];
-        incrementCount();
-      });
-      expect(result.current[0]).toBe(1);
-    });
+        const [updatedEmails] = result.current;
+        expect(updatedEmails.length).toBe(2);
+      })
+    );
+
+    it(
+      'should update state with value',
+      fakeTimeWithAct((act) => {
+        const { result } = renderHook<UseStore<EmailState>, EmailState>(useStore);
+        expect(result.current.emails.length).toBe(1);
+
+        act(() => result.current.saveEmails(['Harry@hotpixelgroup.com', 'Thomas.Burleson@ampf.com']));
+
+        expect(result.current.emails.length).toBe(2);
+        expect(result.current.emails[0]).toBe('Harry@hotpixelgroup.com');
+      })
+    );
+
+    it(
+      'update state with partial selector; confirm with getState()',
+      fakeTimeWithAct((act) => {
+        let store: MessageState;
+        let getState: GetState<MessageState>;
+        createStore<MessageState>(({ set, get }) => {
+          getState = get;
+          return (store = {
+            numViews: 0,
+            messages: [],
+            saveMessages: (v) => v,
+            incrementCount: () => set((s: MessageState) => ({ numViews: s.numViews + 1 })),
+          });
+        });
+
+        expect(store.numViews).toBe(0);
+
+        act(() => store.incrementCount());
+
+        const updated = getState();
+        expect(updated.numViews).toBe(1);
+      })
+    );
+
+    it(
+      'update state with partial selector that returns new state',
+      fakeTimeWithAct((act) => {
+        const useStore = createStore<MessageState>(({ set }) => ({
+          numViews: 0,
+          incrementCount: () => set((s: MessageState) => ({ numViews: s.numViews + 1 })),
+        }));
+        const initialProps = [(s) => s.numViews, (s) => s.incrementCount];
+        const { result } = renderHook(useStore, { initialProps });
+
+        expect(result.current[0]).toBe(0);
+        act(() => {
+          const incrementCount = result.current[1];
+          incrementCount();
+        });
+        expect(result.current[0]).toBe(1);
+      })
+    );
+
+    it(
+      'update state with partial selector that modifies the draft',
+      fakeTimeWithAct((act) => {
+        const useStore = createStore<MessageState>(({ set }) => ({
+          numViews: 0,
+          incrementCount: () =>
+            set((draft: MessageState) => {
+              draft.numViews += 1; // just modify the draft... Immer manages the immutability
+            }),
+        }));
+        const initialProps = [(s) => s.numViews, (s) => s.incrementCount];
+        const { result } = renderHook(useStore, { initialProps });
+
+        expect(result.current[0]).toBe(0);
+        act(() => {
+          const incrementCount = result.current[1];
+          incrementCount();
+        });
+        expect(result.current[0]).toBe(1);
+      })
+    );
   });
 
   describe('enforces immutability', () => {
@@ -596,7 +621,9 @@ describe('UseStore state management', () => {
         addComputedProperty(store, {
           name: 'numMessages',
           selectors: (s: MessageState) => s.messages,
+          initialValue: 2,
           transform: (messages: string[]) => {
+            // console.log(`transform 'numMessages' => ${messages.length}`);
             return messages.length;
           },
         });
@@ -616,66 +643,52 @@ describe('UseStore state management', () => {
     });
 
     it('should access initialized computed properties', () => {
-      expect(getState().numMessages).toBe(0);
+      expect(getState().numMessages).toBe(2);
     });
 
-    it('should access rendered async computed properties', async () => {
-      const { result, waitForNextUpdate } = renderHook<UseStore<MessageState>, MessageState>(useStore);
+    it(
+      'should access rendered async computed properties',
+      fakeTimeWithAct((act) => {
+        const { result } = renderHook<UseStore<MessageState>, MessageState>(useStore);
 
-      // need to wait for computed property async initialization
-      await waitForNextUpdate();
+        expect(result.current.numViews).toBe(1);
+        expect(result.current.numMessages).toBe(2);
 
-      expect(result.current.numViews).toBe(1);
-      expect(result.current.numMessages).toBe(2);
-
-      act(() => {
         // Change that DOES trigger the computed property
-        result.current.saveMessages(['Test Message #3', 'Test Message #4']);
-      });
+        act(() => result.current.saveMessages(['Test Message #3', 'Test Message #4']));
 
-      // need to wait for computed property async change after `saveMessages()`
-      await waitForNextUpdate();
+        expect(result.current.numViews).toBe(1);
+        expect(result.current.numMessages).toBe(4);
 
-      expect(result.current.numViews).toBe(1);
-      expect(result.current.numMessages).toBe(4);
-
-      act(() => {
         // Change that does NOT affect the computed property
-        result.current.incrementCount();
-      });
+        act(() => result.current.incrementCount());
 
-      expect(result.current.numViews).toBe(2);
-      expect(result.current.numMessages).toBe(4);
-    });
+        expect(result.current.numViews).toBe(2);
+        expect(result.current.numMessages).toBe(4);
+      })
+    );
 
-    it('should access handle watched properties', async () => {
-      const { result, waitForNextUpdate } = renderHook<UseStore<MessageState>, MessageState>(useStore);
+    it(
+      'should access handle watched properties',
+      fakeTimeWithAct((act) => {
+        const { result } = renderHook<UseStore<MessageState>, MessageState>(useStore);
 
-      // need to wait for computed property async initialization
-      await waitForNextUpdate();
+        expect(result.current.numMessages).toBe(2);
+        expect(watchedCounter).toBe(1);
 
-      expect(result.current.numMessages).toBe(2);
-      expect(watchedCounter).toBe(1);
-
-      act(() => {
         // Change that DOES trigger the computed property
-        result.current.saveMessages(['Test Message #3', 'Test Message #4']);
-      });
+        act(() => result.current.saveMessages(['Test Message #3', 'Test Message #4']));
 
-      // need to wait for computed property async change after `saveMessages()`
-      await waitForNextUpdate();
+        expect(result.current.numMessages).toBe(4);
+        expect(watchedCounter).toBe(2);
 
-      expect(result.current.numMessages).toBe(4);
-      expect(watchedCounter).toBe(2);
-
-      act(() => {
         // Change that does NOT affect the computed property
-        result.current.incrementCount();
-      });
+        act(() => result.current.incrementCount());
 
-      expect(result.current.numMessages).toBe(4);
-      expect(watchedCounter).toBe(2);
-    });
+        expect(result.current.numMessages).toBe(4);
+        expect(watchedCounter).toBe(2);
+      })
+    );
   });
 
   describe('from DependencyInjection', () => {
