@@ -11,7 +11,7 @@ export interface ObserverState<T> {
 }
 
 export type CompletionCallback = (spy: ObserverSpy<any>) => void;
-const NOOP = () => {};
+const NOOP = () => {}; //eslint-disable-line @typescript-eslint/no-empty-function
 
 export class ObserverSpy<T> implements Observer<T> {
   private isLocked = false;

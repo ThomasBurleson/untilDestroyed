@@ -21,89 +21,6 @@
     }
   },
   "projects": {
-    "utils-react": {
-      "root": "libs/utils/react",
-      "sourceRoot": "libs/utils/react/src",
-      "projectType": "library",
-      "targets": {
-        "build": {
-          "executor": "@nrwl/web:package",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-            "outputPath": "dist/libs/utils/react",
-            "tsConfig": "libs/utils/react/tsconfig.lib.json",
-            "project": "libs/utils/react/package.json",
-            "entryFile": "libs/utils/react/src/index.ts",
-            "external": ["react", "react-dom"],
-            "babelConfig": "@nrwl/react/plugins/bundle-babel",
-            "rollupConfig": "@nrwl/react/plugins/bundle-rollup",
-            "assets": [
-              {
-                "glob": "README.md",
-                "input": ".",
-                "output": "."
-              }
-            ]
-          }
-        },
-        "lint": {
-          "executor": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/utils/react/**/*.{ts,tsx,js,jsx}"]
-          }
-        },
-        "test": {
-          "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/utils/react"],
-          "options": {
-            "jestConfig": "libs/utils/react/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "utils-angular": {
-      "projectType": "library",
-      "root": "libs/utils/angular",
-      "sourceRoot": "libs/utils/angular/src",
-      "prefix": "mio",
-      "targets": {
-        "build": {
-          "executor": "@nrwl/angular:package",
-          "options": {
-            "tsConfig": "libs/utils/angular/tsconfig.lib.json",
-            "project": "libs/utils/angular/ng-package.json",
-            "buildableProjectDepsInPackageJsonType": "dependencies"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "libs/utils/angular/tsconfig.lib.prod.json"
-            }
-          }
-        },
-        "lint": {
-          "executor": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": ["libs/utils/angular/tsconfig.lib.json", "libs/utils/angular/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/utils/angular/**/*"]
-          }
-        },
-        "test": {
-          "executor": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/utils/angular/jest.config.js",
-            "passWithNoTests": true,
-            "setupFile": "libs/utils/angular/src/test-setup.ts"
-          },
-          "outputs": ["coverage/libs/utils/angular"]
-        }
-      },
-      "generators": {
-        "@nrwl/angular:component": {
-          "style": "scss"
-        }
-      }
-    },
     "playground-react": {
       "root": "apps/playground-react",
       "sourceRoot": "apps/playground-react/src",
@@ -124,8 +41,7 @@
               "apps/playground-react/src/github-markdown.css",
               "apps/playground-react/src/styles.css"
             ],
-            "scripts": [],
-            "webpackConfig": "apps/playground-react/webpack.config.js"
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -209,6 +125,47 @@
           "executor": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": ["apps/playground-react-e2e/**/*.{js,ts}"]
+          }
+        }
+      }
+    },
+    "utils-react": {
+      "root": "libs/utils/react",
+      "sourceRoot": "libs/utils/react/src",
+      "projectType": "library",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/web:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/utils/react",
+            "tsConfig": "libs/utils/react/tsconfig.lib.json",
+            "project": "libs/utils/react/package.json",
+            "entryFile": "libs/utils/react/src/index.ts",
+            "external": ["react", "react-dom"],
+            "babelConfig": "@nrwl/react/plugins/bundle-babel",
+            "rollupConfig": "@nrwl/react/plugins/bundle-rollup",
+            "assets": [
+              {
+                "glob": "README.md",
+                "input": ".",
+                "output": "."
+              }
+            ]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/utils/react/**/*.{ts,tsx,js,jsx}"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/utils/react"],
+          "options": {
+            "jestConfig": "libs/utils/react/jest.config.js",
+            "passWithNoTests": true
           }
         }
       }

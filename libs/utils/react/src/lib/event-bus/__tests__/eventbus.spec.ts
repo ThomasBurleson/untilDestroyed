@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { Observable } from 'rxjs';
 import { EventBus } from '../eventbus';
 

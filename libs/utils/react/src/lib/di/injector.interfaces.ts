@@ -1,7 +1,7 @@
 import { Type } from './type';
 import { InjectionToken } from './injector.token';
 
-export type Token = String | Number | InjectionToken<string> | (new (...args: any[]) => any);
+export type Token = string | number | InjectionToken<string> | (new (...args: any[]) => any);
 
 export interface TypeProvider extends Type<any> {
   deps?: any[];

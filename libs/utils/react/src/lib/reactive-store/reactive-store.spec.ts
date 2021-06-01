@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { renderHook, act } from '@testing-library/react-hooks/dom';
 
 import { fakeTimeWithAct } from '../rxjs/testing';

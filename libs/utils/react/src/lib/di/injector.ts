@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { DependencyInjector, UndoChanges, Token, Provider, TypeProvider } from './injector.interfaces';
 
 /**
@@ -47,7 +48,7 @@ class Injector implements DependencyInjector {
    * If not found, this will search a parent injector (if provided)
    */
   get(token: Token): any {
-    var inst = this.findAndMakeInstance(token);
+    const inst = this.findAndMakeInstance(token);
     return inst || (this.parent ? this.parent.get(token) : null);
   }
 
@@ -87,7 +88,7 @@ class Injector implements DependencyInjector {
   addProviders(registry: Provider[]): UndoChanges {
     const origProviders = [...this.providers];
     this.providers = mergeProviders(this.providers, registry);
-    registry.map((it) => this.singletons.delete(it.provide));
+    registry.map((it) => this.singletons.delete(it.provide as object));
 
     return () => this.addProviders(origProviders);
   }
@@ -145,10 +146,10 @@ class Injector implements DependencyInjector {
       return token;
     }
 
-    let result = this.singletons.get(token);
+    let result = this.singletons.get(token as object);
     if (!result) {
       result = this.instanceOf(token);
-      this.singletons.set(token, result);
+      this.singletons.set(token as object, result);
     }
 
     return result;
@@ -161,8 +162,8 @@ class Injector implements DependencyInjector {
 
     // const makeWithClazz = (clazz: any) => (clazz ? new clazz(...deps) : null);
     const makeWithClazz = (clazz: any) =>
-      clazz ? new (clazz.bind.apply(clazz, __doSpread.call(null, [void 0], deps)))() : null;
-    const makeWithFactory = (fn: (...args) => any) => (fn ? fn.apply(null, deps) : null);
+      clazz ? new (clazz.bind.apply(clazz, __doSpread.call(null, [void 0], deps)))() : null; // eslint-disable-line prefer-spread
+    const makeWithFactory = (fn: (...args) => any) => (fn ? fn.apply(null, deps) : null); // eslint-disable-line prefer-spread
 
     return (
       provider &&
@@ -206,9 +207,9 @@ function mergeProviders(current: Provider[], updated: Provider[]): Provider[] {
 //  Due to issues with compiling ESM with `new clazz(...deps)`, we will use a special spread function
 // ***************************************************************************************************
 
-function __doSpread() {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+function __doSpread(...params) {
+  for (var s = 0, i = 0, il = params.length; i < il; i++) s += params[i].length;
   for (var r = Array(s), k = 0, i = 0; i < il; i++)
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) r[k] = a[j];
+    for (let a = params[i], j = 0, jl = a.length; j < jl; j++, k++) r[k] = a[j];
   return r;
 }

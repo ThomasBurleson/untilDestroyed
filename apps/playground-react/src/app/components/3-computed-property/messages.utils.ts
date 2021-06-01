@@ -17,5 +17,5 @@ export const onlyFilteredMessages = ([messages, filterBy]: [string[], string]): 
   const addMarkers = (s: string) =>
     s.replace(new RegExp(filterBy, 'gi'), (match) => `<span class='match'>${match}</span>`);
 
-  return !!filterBy ? messages.filter(containsFilterValue).map(addMarkers) : [...messages];
+  return filterBy ? messages.filter(containsFilterValue).map(addMarkers) : [...messages];
 };

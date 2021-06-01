@@ -1,6 +1,6 @@
 import { VirtualTimeScheduler } from 'rxjs';
 import { AsyncScheduler } from 'rxjs/internal/scheduler/AsyncScheduler';
-import { act } from '@testing-library/react-hooks/dom';
+import { act } from '@testing-library/react-hooks';
 
 type DoneCallback = () => void;
 /**
@@ -32,7 +32,7 @@ export function fakeTime(callback: (...args: any[]) => any) {
     AsyncScheduler.delegate = virtualScheduler;
 
     const params = isAsync ? [flush, done] : [flush];
-    const response = callback.apply(null, params);
+    const response = callback(...params);
 
     AsyncScheduler.delegate = undefined;
 
@@ -67,7 +67,7 @@ export function fakeTimeWithAct(callback: (...args: any[]) => any) {
     AsyncScheduler.delegate = virtualScheduler;
 
     const params = isAsync ? [actAndFlush, done] : [actAndFlush];
-    const response = callback.apply(null, params);
+    const response = callback(...params);
 
     AsyncScheduler.delegate = undefined;
 

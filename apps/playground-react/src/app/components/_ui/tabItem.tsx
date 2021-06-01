@@ -8,7 +8,7 @@ export interface TabItemProps {
 }
 
 export const TabItem: React.FC<TabItemProps> = ({ url, description, children }) => {
-  const matches = (url || '').match(/[^\/]+(?=$)/);
+  const matches = (url || '').match(/[^/]+(?=$)/);
   const name = matches ? matches[0] : '';
   return (
     <div className="tabItem">

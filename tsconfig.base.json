@@ -4,21 +4,19 @@
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "ES2016",
+    "target": "es2015",
     "module": "esnext",
-    "typeRoots": ["node_modules/@types"],
-    "lib": ["es2016", "dom"],
+    "lib": ["es2017", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@mindspace-io/react": ["libs/utils/react/src/index.ts"],
-      "@mindspace-io/utils/react": ["libs/utils/react/src/index.ts"],
-      "@mindspace-io/utils/angular": ["libs/utils/angular/src/index.ts"]
+      "@mindspace-io/utils/react": ["libs/utils/react/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

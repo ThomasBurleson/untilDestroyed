@@ -11,7 +11,7 @@ export type StatusState = Partial<{ isLoading: boolean; error: unknown }>;
 export type CustomState = Record<string | number | symbol, unknown>;
 export type State = CustomState & PaginationState & StatusState;
 
-export type CustomValue = string | number | symbol | object;
+export type CustomValue = string | number | symbol | Record<string, unknown>;
 
 export type SetLoading = (isLoading?: boolean) => void;
 export type SetError = (error: unknown) => void;

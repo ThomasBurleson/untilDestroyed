@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { CodeBox } from '../_ui/code-box';
 import { SimpleCounter } from './demo';
 

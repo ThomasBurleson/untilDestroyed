@@ -16,12 +16,9 @@
   "npmScope": "mindspace-io",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "@nrwl/nx-cloud",
+      "runner": "@nrwl/workspace/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["serve", "build", "lint", "test", "e2e"],
-        "accessToken": "MWM1MjFiZjUtZjc1OS00YTAxLThjN2EtZmNiMzNhMTJkMzJhfHJlYWQtd3JpdGU=",
-        "canTrackAnalytics": false,
-        "showUsageWarnings": true
+        "cacheableOperations": ["build", "lint", "test", "e2e"]
       }
     }
   },
@@ -35,9 +32,6 @@
     },
     "utils-react": {
       "tags": ["type:utils", "scope:react"]
-    },
-    "utils-angular": {
-      "tags": ["type:util", "scope:angular"]
     }
   }
 }

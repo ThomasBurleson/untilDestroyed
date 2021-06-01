@@ -8,7 +8,7 @@ import { SharedState } from '../5-shared-state/_view';
 export interface NavButton {
   label: string;
   url: string;
-  component: React.FC<{}>;
+  component: React.FC;
 }
 
 export const BUTTONS: NavButton[] = [
