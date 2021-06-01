@@ -22,6 +22,7 @@
  * `useObservable<T>(source:Observable<T>,initialVal:T): [val:T, setObservable]`
  *
  * @code
+ *   const [emitter]                = useState(() => new Subject<string>();
  *   const [people, setPeople$]     = useObservable<Contact[]>(null, []);
  *   const [criteria, setCriteria$] = useObservable<string>(null, '');
  *
@@ -35,11 +36,10 @@
  *   });
  *
  *   return (
- *     <IonList>
- *      {
- *        people.map((person, idx) => <ContactListItem key={idx} person={person} />
- *      }
- *      </IonList>
+ *     <Search onChange={value => emitter.next(value) } criteria={criteria} />
+ *     <IonList> { people.map((person, idx) =>
+ *        <ContactListItem key={idx} person={person} />
+ *      }</IonList>
  *   );
  *
  * @publicApi
