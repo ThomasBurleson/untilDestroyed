@@ -2,8 +2,8 @@ import SimpleCounter from '../1-simple-counter';
 import AsyncMessages from '../2-async-loading';
 import FilteredMessages from '../3-computed-property';
 
-import { QuestionAnswer } from '../4-watch-property/_view';
-import { SharedState } from '../5-shared-state/_view';
+import QuestionAnswer from '../4-watch-property';
+import SharedState from '../5-shared-state';
 
 export interface NavButton {
   label: string;

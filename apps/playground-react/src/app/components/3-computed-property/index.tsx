@@ -8,7 +8,7 @@ import { FilteredMessages } from './demo';
 //
 // ************************************
 
-const Demo: React.FC = () => {
+const DemoBox: React.FC = () => {
   return (
     <div>
       <div className="sampleBox bg-gray-200 mb-4">
@@ -47,4 +47,4 @@ const Demo: React.FC = () => {
   );
 };
 
-export default Demo;
+export default DemoBox;

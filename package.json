@@ -1,10 +1,10 @@
 {
   "name": "mindspace-io",
-  "version": "1.6.3",
+  "version": "1.7.0",
   "license": "MIT",
   "scripts": {
     "nx": "nx",
-    "deploy": "./deploy-to-npm.sh",
+    "deploy": "source ./deploy-to-npm.sh",
     "start": "nx serve",
     "build": "nx build utils-react",
     "test": "nx test utils-react --watch",

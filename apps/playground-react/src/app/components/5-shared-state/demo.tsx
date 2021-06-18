@@ -5,7 +5,7 @@
 //  Toggle the imports to test Hooks vs Store
 // ************************************
 
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { useCounter as useShared } from './counter.store';
 import { useCounter as useUnshared } from './counter.hook';
