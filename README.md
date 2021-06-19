@@ -23,7 +23,7 @@ A super simply powerful State Management library React. Inspired by Vue and Zust
 
 ![image](https://user-images.githubusercontent.com/210413/68954909-8cf57800-078a-11ea-90db-df58987a9790.png)
 
-Here is a univeral Dependency Injection (DI) engine; implemented in TypeScript. This DI engine is independent of Angular and can be used easily within ANY TypeScript project.
+Here is a universal Dependency Injection (DI) engine; implemented in TypeScript. This DI engine is independent of Angular and can be used easily within ANY TypeScript project.
 
 - [**`makeInjector()`** for powerful, angular-like dependency injection](https://github.com/ThomasBurleson/mindspace-utils/blob/master/libs/utils/react/src/lib/di/README.md)
 
